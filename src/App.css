@@ -619,3 +619,47 @@ tr.removed td {
     color: var(--text-muted);
     margin-top: 6px;
 }
+
+/* =====================================================
+   DROPZONE IMPROVEMENTS
+   ===================================================== */
+
+.drop-icon.loading {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.drop-text {
+    font-weight: 500;
+}
+
+.drop-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.file-stats {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}

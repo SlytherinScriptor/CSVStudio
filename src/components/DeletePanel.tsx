@@ -5,6 +5,7 @@ import { DropZone } from './ui/DropZone';
 import { Button } from './ui/Button';
 import { ColumnPicker } from './ui/ColumnPicker';
 import { Table } from './ui/Table';
+import { HelpTooltip } from './ui/HelpTooltip';
 import { parseCSVFile } from '../lib/csv';
 import type { ParsedCSV } from '../lib/csv';
 
@@ -141,10 +142,15 @@ export function DeletePanel() {
                 <DropZone
                     label="Original CSV"
                     onFile={handleOriginal}
-                    name={original ? `✔ ${original.name} (${original.rows.length} rows)` : ''}
+                    name={original?.name}
+                    rowCount={original?.rows.length}
+                    columnCount={original?.headers.length}
                 />
                 <Card>
-                    <label>Unique Column (from Original)</label>
+                    <label>
+                        Unique Column
+                        <HelpTooltip content="Select the column containing unique identifiers (like ID or email) that will be used to match rows for deletion." />
+                    </label>
                     <select value={key} onChange={e => setKey(e.target.value)} disabled={!original}>
                         {original?.headers.map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
@@ -158,14 +164,26 @@ export function DeletePanel() {
                     <label>Paste IDs (one per line, or comma/semicolon/tab separated)</label>
                     <textarea
                         rows={8}
-                        placeholder="Paste here…"
+                        placeholder="Paste IDs here…"
                         value={idsText}
                         onChange={e => setIdsText(e.target.value)}
                     />
                     <div className="actions" style={{ marginTop: 8 }}>
-                        <label><input type="checkbox" checked={options.trim} onChange={e => setOptions({ ...options, trim: e.target.checked })} /> Trim</label>
-                        <label><input type="checkbox" checked={options.dedup} onChange={e => setOptions({ ...options, dedup: e.target.checked })} /> Dedupe</label>
-                        <label><input type="checkbox" checked={options.ci} onChange={e => setOptions({ ...options, ci: e.target.checked })} /> Case‑insensitive</label>
+                        <label>
+                            <input type="checkbox" checked={options.trim} onChange={e => setOptions({ ...options, trim: e.target.checked })} />
+                            Trim
+                            <HelpTooltip content="Remove leading and trailing whitespace from each ID." />
+                        </label>
+                        <label>
+                            <input type="checkbox" checked={options.dedup} onChange={e => setOptions({ ...options, dedup: e.target.checked })} />
+                            Dedupe
+                            <HelpTooltip content="Remove duplicate IDs from your list." />
+                        </label>
+                        <label>
+                            <input type="checkbox" checked={options.ci} onChange={e => setOptions({ ...options, ci: e.target.checked })} />
+                            Case-insensitive
+                            <HelpTooltip content="Match IDs regardless of uppercase/lowercase (e.g., 'ABC' will match 'abc')." />
+                        </label>
                         <Button variant="secondary" onClick={handleClean}>Clean IDs</Button>
                     </div>
                     <pre className="stat">{idsStats}</pre>

@@ -6,6 +6,7 @@ import { Stepper } from './ui/Stepper';
 import { Button } from './ui/Button';
 import { ColumnPicker } from './ui/ColumnPicker';
 import { Table } from './ui/Table';
+import { HelpTooltip } from './ui/HelpTooltip';
 import { parseCSVFile } from '../lib/csv';
 import type { ParsedCSV } from '../lib/csv';
 
@@ -213,12 +214,16 @@ export function UpsertPanel() {
                     <DropZone
                         label="Original CSV"
                         onFile={handleOriginal}
-                        name={original ? `✔ ${original.name} (${original.rows.length} rows)` : ''}
+                        name={original?.name}
+                        rowCount={original?.rows.length}
+                        columnCount={original?.headers.length}
                     />
                     <DropZone
                         label="Modifications CSV"
                         onFile={handleMods}
-                        name={mods ? `✔ ${mods.name} (${mods.rows.length} rows)` : ''}
+                        name={mods?.name}
+                        rowCount={mods?.rows.length}
+                        columnCount={mods?.headers.length}
                     />
                 </div>
             </div>
@@ -228,14 +233,20 @@ export function UpsertPanel() {
                 <div style={{ marginTop: 12 }}>
                     <div className="grid grid-2">
                         <Card>
-                            <label>Unique Column (must exist in both files)</label>
+                            <label>
+                                Unique Column
+                                <HelpTooltip content="Select a column that uniquely identifies each row (like an ID or email). This column must exist in both files to match rows for updating." />
+                            </label>
                             <select value={key} onChange={e => setKey(e.target.value)} disabled={step > 2 && !!previewData}>
                                 {commonHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                             </select>
-                            <p className="hint">We only show header names present in both CSVs.</p>
+                            <p className="hint">Only columns present in both CSVs are shown.</p>
                         </Card>
                         <Card>
-                            <label>Output Schema</label>
+                            <label>
+                                Output Schema
+                                <HelpTooltip content="'Keep Original' preserves only columns from your original file. 'Union' adds any new columns from the modifications file at the end." />
+                            </label>
                             <select value={headerMode} onChange={e => setHeaderMode(e.target.value as any)} disabled={step > 2 && !!previewData}>
                                 <option value="original">Keep Original column order</option>
                                 <option value="union">Union (Original first, then new columns)</option>
