@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Eye, Trash2, RotateCcw } from 'lucide-react';
-import Papa from 'papaparse';
+import { Eye, RotateCcw, Copy } from 'lucide-react';
 import { Card } from './ui/Card';
 import { DropZone } from './ui/DropZone';
 import { Button } from './ui/Button';
@@ -103,19 +102,18 @@ export function DeletePanel() {
             return !cleanIds.set.has(probe);
         });
 
-        const csv = Papa.unparse({
-            fields: original.headers,
-            data: filtered.map(r => original.headers.map(h => r[h] ?? ''))
-        });
+        // Build CSV preserving original format
+        const headerLine = original.headers.join(',');
+        const dataLines = filtered.map(r =>
+            original.headers.map(h => r[h] ?? '').join(',')
+        );
+        const csv = [headerLine, ...dataLines].join('\r\n');
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'updated.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-        alert(`Delete complete → Removed: ${original.rows.length - filtered.length}, Remaining: ${filtered.length}`);
+        navigator.clipboard.writeText(csv).then(() => {
+            alert(`Copied to clipboard! Removed: ${original.rows.length - filtered.length}, Remaining: ${filtered.length}`);
+        }).catch(() => {
+            alert('Failed to copy to clipboard');
+        });
     };
 
     const handleReset = () => {
@@ -187,7 +185,7 @@ export function DeletePanel() {
                     <Card>
                         <div className="actions">
                             <Button variant="secondary" onClick={handlePreview} icon={<Eye size={16} />}>Preview</Button>
-                            <Button variant="danger" onClick={handleRun} icon={<Trash2 size={16} />}>Delete & Download</Button>
+                            <Button variant="danger" onClick={handleRun} icon={<Copy size={16} />}>Delete & Copy</Button>
                             <Button variant="ghost" onClick={handleReset} icon={<RotateCcw size={16} />}>Reset</Button>
                         </div>
                         {summary && <div className="stat" style={{ marginTop: 8 }}>{summary}</div>}

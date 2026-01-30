@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Eye, Download, RotateCcw } from 'lucide-react';
-import Papa from 'papaparse';
+import { Eye, Copy, RotateCcw } from 'lucide-react';
 import { Card } from './ui/Card';
 import { DropZone } from './ui/DropZone';
 import { Stepper } from './ui/Stepper';
@@ -119,8 +118,12 @@ export function UpsertPanel() {
     const handleRun = () => {
         if (!original || !mods || !key) return;
 
-        // Logic similar to preview, but modifying original rows in place (or clone)
-        const outRows = original.rows.map(r => ({ ...r })); // shallow clone
+        let headersOut = [...original.headers];
+        if (headerMode === 'union') {
+            const seen = new Set(headersOut);
+            mods.headers.forEach(h => { if (!seen.has(h)) { headersOut.push(h); seen.add(h); } });
+        }
+
         const modMap = new Map();
         mods.rows.forEach(r => {
             const id = String(r[key] ?? '').trim();
@@ -128,38 +131,44 @@ export function UpsertPanel() {
         });
 
         let updated = 0, inserted = 0;
-        outRows.forEach(r => {
-            const id = String(r[key] ?? '').trim();
+        const outRows = original.rows.map(r => {
+            const row = { ...r }; // shallow clone
+            const id = String(row[key] ?? '').trim();
             if (id && modMap.has(id)) {
-                Object.assign(r, modMap.get(id));
-                updated++;
+                const mr = modMap.get(id);
+                // Check if there are actual changes before counting as update
+                let hasChanges = false;
+                headersOut.forEach(h => {
+                    const before = row[h] ?? '';
+                    const after = mr[h] !== undefined ? mr[h] : row[h] ?? '';
+                    if (String(before) !== String(after)) hasChanges = true;
+                });
+                if (hasChanges) {
+                    Object.assign(row, mr);
+                    updated++;
+                }
                 modMap.delete(id);
             }
+            return row;
         });
+
         for (const [, r] of modMap) {
             outRows.push(r);
             inserted++;
         }
 
-        let headersOut = [...original.headers];
-        if (headerMode === 'union') {
-            const seen = new Set(headersOut);
-            mods.headers.forEach(h => { if (!seen.has(h)) { headersOut.push(h); seen.add(h); } });
-        }
+        // Build CSV preserving original format, only modified values change
+        const headerLine = headersOut.join(',');
+        const dataLines = outRows.map(r =>
+            headersOut.map(h => r[h] ?? '').join(',')
+        );
+        const csv = [headerLine, ...dataLines].join('\r\n');
 
-        const csv = Papa.unparse({
-            fields: headersOut,
-            data: outRows.map(r => headersOut.map(h => r[h] ?? ''))
+        navigator.clipboard.writeText(csv).then(() => {
+            alert(`Copied to clipboard! Updated: ${updated}, Inserted: ${inserted}`);
+        }).catch(() => {
+            alert('Failed to copy to clipboard');
         });
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'updated.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-        alert(`Upserted: ${updated} / Inserted: ${inserted}`);
     };
 
     const handleReset = () => {
@@ -259,7 +268,7 @@ export function UpsertPanel() {
                     <Card>
                         <div className="actions">
                             <Button variant="secondary" onClick={handlePreview} disabled={!key} icon={<Eye size={16} />}>Preview</Button>
-                            <Button variant="ok" onClick={handleRun} disabled={!key} icon={<Download size={16} />}>Download CSV</Button>
+                            <Button variant="ok" onClick={handleRun} disabled={!key} icon={<Copy size={16} />}>Copy CSV</Button>
                             <Button variant="ghost" onClick={handleReset} icon={<RotateCcw size={16} />}>Reset</Button>
                         </div>
                         {summary && <div className="stat" style={{ marginTop: 8 }}>{summary}</div>}
