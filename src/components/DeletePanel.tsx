@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import { ColumnPicker } from './ui/ColumnPicker';
 import { Table } from './ui/Table';
 import { HelpTooltip } from './ui/HelpTooltip';
-import { parseCSVFile, exportToCSV } from '../lib/csv';
+import { parseCSVFile, formatPreservingExport } from '../lib/csv';
 import type { ParsedCSV } from '../lib/csv';
 
 export function DeletePanel() {
@@ -103,8 +103,9 @@ export function DeletePanel() {
             return !cleanIds.set.has(probe);
         });
 
-        // Export CSV with proper quoting
-        const csv = exportToCSV(original.headers, filtered);
+        // Format-preserving export - remaining rows are unchanged, so changedKeys is empty
+        const changedKeys = new Set<string>();
+        const csv = formatPreservingExport(original.headers, filtered, original, key, changedKeys);
 
         navigator.clipboard.writeText(csv).then(() => {
             alert(`Copied to clipboard! Removed: ${original.rows.length - filtered.length}, Remaining: ${filtered.length}`);

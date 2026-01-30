@@ -7,7 +7,7 @@ import { Button } from './ui/Button';
 import { ColumnPicker } from './ui/ColumnPicker';
 import { Table } from './ui/Table';
 import { HelpTooltip } from './ui/HelpTooltip';
-import { parseCSVFile, exportToCSV } from '../lib/csv';
+import { parseCSVFile, formatPreservingExport } from '../lib/csv';
 import type { ParsedCSV } from '../lib/csv';
 
 export function UpsertPanel() {
@@ -132,6 +132,8 @@ export function UpsertPanel() {
         });
 
         let updated = 0, inserted = 0;
+        const changedKeys = new Set<string>();  // Track which rows changed
+
         const outRows = original.rows.map(r => {
             const row = { ...r }; // shallow clone
             const id = String(row[key] ?? '').trim();
@@ -146,6 +148,7 @@ export function UpsertPanel() {
                 });
                 if (hasChanges) {
                     Object.assign(row, mr);
+                    changedKeys.add(id);  // Mark as changed
                     updated++;
                 }
                 modMap.delete(id);
@@ -153,13 +156,15 @@ export function UpsertPanel() {
             return row;
         });
 
-        for (const [, r] of modMap) {
+        // Insert new rows (all marked as changed since they're new)
+        for (const [id, r] of modMap) {
             outRows.push(r);
+            changedKeys.add(id);
             inserted++;
         }
 
-        // Export CSV with proper quoting
-        const csv = exportToCSV(headersOut, outRows);
+        // Format-preserving export: unchanged rows stay byte-identical
+        const csv = formatPreservingExport(headersOut, outRows, original, key, changedKeys);
 
         navigator.clipboard.writeText(csv).then(() => {
             alert(`Copied to clipboard! Updated: ${updated}, Inserted: ${inserted}`);
