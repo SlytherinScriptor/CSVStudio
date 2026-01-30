@@ -263,6 +263,7 @@ a {
         opacity: 0;
         transform: translateX(100%);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -361,10 +362,14 @@ a {
    ===================================================== */
 
 .app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 260px;
+    right: 0;
     background: var(--bg-elevated);
     border-top: 1px solid var(--border);
-    padding: 12px 20px;
-    margin-left: 260px;
+    padding: 12px 24px;
+    z-index: 50;
 }
 
 .footer-content {
@@ -410,7 +415,7 @@ a {
 
 @media (max-width: 900px) {
     .app-footer {
-        margin-left: 80px;
+        left: 80px;
     }
 }
 
