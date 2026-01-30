@@ -755,3 +755,31 @@ tr.removed td {
 .checkbox-label:hover {
     color: var(--text);
 }
+/* =====================================================
+   VALIDATION TOOL STYLES
+   =====================================================
+
+.validation-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.results-view {
+    animation: fade-in 0.3s ease-out;
+}
+
+.rules-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rules-list::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}

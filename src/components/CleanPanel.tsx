@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Sparkles, Eye, Copy, RotateCcw, Trash2, Type, Filter } from 'lucide-react';
+import { Sparkles, Eye, Copy, RotateCcw, Trash2, Type, Filter, Search, Split, Merge } from 'lucide-react';
 import { Card } from './ui/Card';
 import { DropZone } from './ui/DropZone';
 import { Button } from './ui/Button';
@@ -9,10 +9,14 @@ import { HelpTooltip } from './ui/HelpTooltip';
 import { useToast } from './ui/Toast';
 import { parseCSVFile, formatPreservingExport } from '../lib/csv';
 import {
+
     handleMissingValues,
     standardizeText,
     removeDuplicates,
     trimAllColumns,
+    findAndReplace,
+    splitColumn,
+    combineColumns,
     getDataQualitySummary,
     countMissing,
     type FillStrategy,
@@ -25,7 +29,11 @@ type CleaningOperation =
     | { type: 'missing'; column: string; strategy: FillStrategy; fillValue?: string }
     | { type: 'text'; column: string; mode: TextCase }
     | { type: 'dedupe'; columns: string[] }
-    | { type: 'trimAll' };
+    | { type: 'dedupe'; columns: string[] }
+    | { type: 'trimAll' }
+    | { type: 'findReplace'; column: string; find: string; replace: string }
+    | { type: 'split'; column: string; delimiter: string }
+    | { type: 'combine'; columns: string[]; newColumn: string };
 
 interface OperationResult {
     operation: CleaningOperation;
@@ -36,6 +44,7 @@ export function CleanPanel() {
     const { showToast } = useToast();
     const [csv, setCsv] = useState<ParsedCSV | null>(null);
     const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set());
+    const [previewHeaders, setPreviewHeaders] = useState<string[]>([]);
 
     // Cleaning configuration
     const [missingColumn, setMissingColumn] = useState('');
@@ -43,7 +52,19 @@ export function CleanPanel() {
     const [fillValue, setFillValue] = useState('');
     const [textColumn, setTextColumn] = useState('');
     const [textMode, setTextMode] = useState<TextCase>('trim');
+
     const [dedupeColumns, setDedupeColumns] = useState<Set<string>>(new Set());
+
+    // Advanced cleaning config
+    const [findColumn, setFindColumn] = useState('');
+    const [findText, setFindText] = useState('');
+    const [replaceText, setReplaceText] = useState('');
+    const [findRegex, setFindRegex] = useState(false);
+    const [splitColumnName, setSplitColumnName] = useState('');
+    const [splitDelimiter, setSplitDelimiter] = useState(',');
+    const [combineColumnsList, setCombineColumnsList] = useState<Set<string>>(new Set());
+    const [combineSeparator, setCombineSeparator] = useState(' ');
+    const [newCombinedName, setNewCombinedName] = useState('Combined');
 
     // Preview state
     const [previewRows, setPreviewRows] = useState<Record<string, any>[] | null>(null);
@@ -55,6 +76,7 @@ export function CleanPanel() {
             const parsed = await parseCSVFile(file);
             setCsv(parsed);
             setSelectedCols(new Set(parsed.headers));
+            setPreviewHeaders(parsed.headers);
             setPreviewRows(null);
             setOperations([]);
             setChangedKeys(new Set());
@@ -71,8 +93,8 @@ export function CleanPanel() {
     // Data quality summary
     const qualitySummary = useMemo(() => {
         if (!csv) return null;
-        return getDataQualitySummary(csv.rows, csv.headers);
-    }, [csv]);
+        return getDataQualitySummary(previewRows || csv.rows, previewHeaders.length > 0 ? previewHeaders : csv.headers);
+    }, [csv, previewRows, previewHeaders]);
 
     // Column type badges
     const getTypeBadge = (type: ColumnType) => {
@@ -191,6 +213,70 @@ export function CleanPanel() {
         }
 
         showToast(`Trimmed whitespace in ${result.affected} rows`, 'success');
+        showToast(`Trimmed whitespace in ${result.affected} rows`, 'success');
+    };
+
+    // Apply Find & Replace
+    const applyFindReplace = () => {
+        if (!csv || !findColumn || !findText) return;
+        const sourceRows = previewRows || csv.rows;
+        const result = findAndReplace(sourceRows, findColumn, findText, replaceText, findRegex, false);
+
+        setPreviewRows(result.rows);
+        setOperations(prev => [...prev, {
+            operation: { type: 'findReplace', column: findColumn, find: findText, replace: replaceText },
+            affected: result.affected
+        }]);
+        showToast(`Replaced ${result.affected} occurrences`, 'success');
+    };
+
+    // Apply Split
+    const applySplit = () => {
+        if (!csv || !splitColumnName || !splitDelimiter) return;
+        const sourceRows = previewRows || csv.rows;
+        const currentHeaders = previewHeaders.length > 0 ? previewHeaders : csv.headers;
+
+        const result = splitColumn(sourceRows, currentHeaders, splitColumnName, splitDelimiter);
+
+        setPreviewRows(result.rows);
+        setPreviewHeaders(result.headers);
+
+        // Add new columns to selection
+        const newSelected = new Set(selectedCols);
+        result.headers.forEach(h => {
+            if (!currentHeaders.includes(h)) newSelected.add(h);
+        });
+        setSelectedCols(newSelected);
+
+        setOperations(prev => [...prev, {
+            operation: { type: 'split', column: splitColumnName, delimiter: splitDelimiter },
+            affected: result.affected
+        }]);
+        showToast(`Split column into new parts`, 'success');
+    };
+
+    // Apply Combine
+    const applyCombine = () => {
+        if (!csv || combineColumnsList.size < 2 || !newCombinedName) return;
+        const sourceRows = previewRows || csv.rows;
+        const currentHeaders = previewHeaders.length > 0 ? previewHeaders : csv.headers;
+        const colsToCombine = Array.from(combineColumnsList);
+
+        const result = combineColumns(sourceRows, currentHeaders, colsToCombine, combineSeparator, newCombinedName);
+
+        setPreviewRows(result.rows);
+        setPreviewHeaders(result.headers);
+
+        // Add new column to selection
+        const newSelected = new Set(selectedCols);
+        if (!selectedCols.has(newCombinedName)) newSelected.add(newCombinedName);
+        setSelectedCols(newSelected);
+
+        setOperations(prev => [...prev, {
+            operation: { type: 'combine', columns: colsToCombine, newColumn: newCombinedName },
+            affected: result.affected
+        }]);
+        showToast(`Combined ${colsToCombine.length} columns`, 'success');
     };
 
     // Reset to original
@@ -203,10 +289,11 @@ export function CleanPanel() {
 
     // Export
     const handleExport = () => {
-        if (!csv) return;
+        if (!csv) return null;
 
         const rows = previewRows || csv.rows;
-        const headers = csv.headers.filter(h => selectedCols.has(h));
+        const currentHeaders = previewHeaders.length > 0 ? previewHeaders : csv.headers;
+        const headers = currentHeaders.filter(h => selectedCols.has(h));
         const keyColumn = headers[0] || '';
 
         const csvString = formatPreservingExport(headers, rows, csv, keyColumn, changedKeys);
@@ -222,6 +309,7 @@ export function CleanPanel() {
     const handleClear = () => {
         setCsv(null);
         setPreviewRows(null);
+        setPreviewHeaders([]);
         setOperations([]);
         setSelectedCols(new Set());
         setChangedKeys(new Set());
@@ -229,7 +317,8 @@ export function CleanPanel() {
 
     // Current rows to display
     const displayRows = previewRows || csv?.rows || [];
-    const displayCols = csv?.headers.filter(h => selectedCols.has(h)) || [];
+    const currentHeaders = previewHeaders.length > 0 ? previewHeaders : (csv?.headers || []);
+    const displayCols = currentHeaders.filter(h => selectedCols.has(h));
 
     return (
         <div className="clean-panel">
@@ -253,7 +342,7 @@ export function CleanPanel() {
                                     <span className="stat-label">Total Rows</span>
                                 </div>
                                 <div className="stat">
-                                    <span className="stat-value">{csv.headers.length}</span>
+                                    <span className="stat-value">{currentHeaders.length}</span>
                                     <span className="stat-label">Columns</span>
                                 </div>
                                 <div className="stat">
@@ -272,19 +361,98 @@ export function CleanPanel() {
                             <div style={{ marginTop: '16px' }}>
                                 <strong>Column Types:</strong>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-                                    {csv.headers.map(h => (
-                                        <span key={h} style={{ fontSize: '0.85rem' }}>
-                                            {h}
-                                            {qualitySummary && getTypeBadge(qualitySummary.columnTypes[h])}
-                                        </span>
-                                    ))}
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                                        {currentHeaders.map(h => (
+                                            <span key={h} style={{ fontSize: '0.85rem' }}>
+                                                {h}
+                                                {qualitySummary && getTypeBadge(qualitySummary.columnTypes[h])}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </Card>
 
-                    {/* Cleaning Operations */}
-                    <div className="cleaning-operations">
+                    {/* Main Cleaning Grid */}
+                    <div className="cleaning-operations" style={{ marginBottom: '20px' }}>
+                        {/* Find & Replace - Full Width/Prominent */}
+                        <div style={{ gridColumn: '1 / -1' }}>
+                            <Card>
+                                <h4 style={{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
+                                    <Search size={20} />
+                                    Find & Replace
+                                    <HelpTooltip content="Search for text and replace it with another value. Supports Regex." />
+                                </h4>
+                                <div className="operation-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                                        <div style={{ flex: '1', minWidth: '200px' }}>
+                                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 500 }}>Target Column</label>
+                                            <select
+                                                value={findColumn}
+                                                onChange={e => setFindColumn(e.target.value)}
+                                                style={{ width: '100%', padding: '10px' }}
+                                            >
+                                                <option value="">Select column...</option>
+                                                {currentHeaders.map(h => (
+                                                    <option key={h} value={h}>{h}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div style={{ flex: '2', minWidth: '300px', display: 'flex', gap: '12px' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 500 }}>Find</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Text to find..."
+                                                    value={findText}
+                                                    onChange={e => setFindText(e.target.value)}
+                                                    style={{ width: '100%', padding: '10px' }}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 500 }}>Replace</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Replacement text..."
+                                                    value={replaceText}
+                                                    onChange={e => setReplaceText(e.target.value)}
+                                                    style={{ width: '100%', padding: '10px' }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'flex-end', height: '62px', paddingBottom: '3px', gap: '12px' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.9rem', cursor: 'pointer', height: '40px' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={findRegex}
+                                                    onChange={e => setFindRegex(e.target.checked)}
+                                                    style={{ marginRight: '6px', width: '16px', height: '16px' }}
+                                                />
+                                                Regex
+                                            </label>
+
+                                            <Button
+                                                variant="secondary"
+                                                onClick={applyFindReplace}
+                                                disabled={!findColumn || !findText}
+                                                style={{ height: '40px', padding: '0 24px' }}
+                                            >
+                                                Replace Matches
+                                            </Button>
+
+                                            <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: '12px', marginLeft: '0px', height: '40px', display: 'flex', alignItems: 'center' }}>
+                                                <Button variant="secondary" onClick={applyTrimAll} style={{ height: '40px' }}>
+                                                    Trim All Whitespace
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </div>
                         {/* Missing Values */}
                         <Card>
                             <h4 style={{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -300,9 +468,10 @@ export function CleanPanel() {
                                     style={{ flex: 1 }}
                                 >
                                     <option value="">Select column...</option>
-                                    {csv.headers.map(h => (
+                                    <option value="">Select column...</option>
+                                    {currentHeaders.map(h => (
                                         <option key={h} value={h}>
-                                            {h} ({countMissing(csv.rows, h)} missing)
+                                            {h} ({countMissing(displayRows, h)} missing)
                                         </option>
                                     ))}
                                 </select>
@@ -351,7 +520,8 @@ export function CleanPanel() {
                                     style={{ flex: 1 }}
                                 >
                                     <option value="">Select column...</option>
-                                    {csv.headers.map(h => (
+                                    <option value="">Select column...</option>
+                                    {currentHeaders.map(h => (
                                         <option key={h} value={h}>{h}</option>
                                     ))}
                                 </select>
@@ -385,7 +555,7 @@ export function CleanPanel() {
                             </h4>
 
                             <div className="dedupe-columns">
-                                {csv.headers.map(h => (
+                                {currentHeaders.map(h => (
                                     <label key={h} className="checkbox-label">
                                         <input
                                             type="checkbox"
@@ -412,15 +582,95 @@ export function CleanPanel() {
                             </Button>
                         </Card>
 
-                        {/* Quick Actions */}
+
+
+                        {/* Split Column */}
                         <Card>
-                            <h4 style={{ margin: '0 0 12px' }}>Quick Actions</h4>
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                <Button variant="secondary" onClick={applyTrimAll}>
-                                    Trim All Whitespace
+                            <h4 style={{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Split size={16} />
+                                Split Column
+                                <HelpTooltip content="Split a single column into multiple columns based on a delimiter." />
+                            </h4>
+                            <div className="operation-form">
+                                <select
+                                    value={splitColumnName}
+                                    onChange={e => setSplitColumnName(e.target.value)}
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="">Select column to split...</option>
+                                    {currentHeaders.map(h => (
+                                        <option key={h} value={h}>{h}</option>
+                                    ))}
+                                </select>
+                                <input
+                                    type="text"
+                                    placeholder="Delimiter (e.g. ,)"
+                                    value={splitDelimiter}
+                                    onChange={e => setSplitDelimiter(e.target.value)}
+                                    style={{ width: '120px' }}
+                                />
+                                <Button
+                                    variant="secondary"
+                                    onClick={applySplit}
+                                    disabled={!splitColumnName || !splitDelimiter}
+                                >
+                                    Split
                                 </Button>
                             </div>
                         </Card>
+
+                        {/* Combine Columns */}
+                        <Card>
+                            <h4 style={{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Merge size={16} />
+                                Combine Columns
+                                <HelpTooltip content="Merge multiple columns into that one single column." />
+                            </h4>
+                            <div style={{ marginBottom: '12px' }}>
+                                <div className="dedupe-columns" style={{ maxHeight: '150px', overflowY: 'auto', marginBottom: '12px' }}>
+                                    {currentHeaders.map(h => (
+                                        <label key={h} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={combineColumnsList.has(h)}
+                                                onChange={e => {
+                                                    const newSet = new Set(combineColumnsList);
+                                                    if (e.target.checked) newSet.add(h);
+                                                    else newSet.delete(h);
+                                                    setCombineColumnsList(newSet);
+                                                }}
+                                            />
+                                            {h}
+                                        </label>
+                                    ))}
+                                </div>
+                                <div className="operation-form">
+                                    <input
+                                        type="text"
+                                        placeholder="Separator (e.g. space)"
+                                        value={combineSeparator}
+                                        onChange={e => setCombineSeparator(e.target.value)}
+                                        style={{ width: '150px' }}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="New Column Name"
+                                        value={newCombinedName}
+                                        onChange={e => setNewCombinedName(e.target.value)}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <Button
+                                        variant="secondary"
+                                        onClick={applyCombine}
+                                        disabled={combineColumnsList.size < 2 || !newCombinedName}
+                                    >
+                                        Combine
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+
+
                     </div>
 
                     {/* Operations Applied */}
@@ -438,6 +688,12 @@ export function CleanPanel() {
                                             `Dedupe by [${op.operation.columns.join(', ')}] (${op.affected} removed)`}
                                         {op.operation.type === 'trimAll' &&
                                             `Trim all whitespace (${op.affected} rows)`}
+                                        {op.operation.type === 'findReplace' &&
+                                            `Replace "${op.operation.find}" with "${op.operation.replace}" in ${op.operation.column} (${op.affected} rows)`}
+                                        {op.operation.type === 'split' &&
+                                            `Split "${op.operation.column}" by "${op.operation.delimiter}"`}
+                                        {op.operation.type === 'combine' &&
+                                            `Combined [${op.operation.columns.join(', ')}] into "${op.operation.newColumn}"`}
                                     </li>
                                 ))}
                             </ul>

@@ -151,7 +151,7 @@ export function DeletePanel() {
                     <select value={key} onChange={e => setKey(e.target.value)} disabled={!original}>
                         {original?.headers.map(h => <option key={h} value={h}>{h}</option>)}
                     </select>
-                    <p className="hint">Example: orders__ExternalId__c</p>
+                    <p className="hint">Example: user_id, email, or product_sku</p>
                 </Card>
             </div>
 

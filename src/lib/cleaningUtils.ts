@@ -278,3 +278,145 @@ export function getDataQualitySummary(
         duplicateCount: affected
     };
 }
+
+/**
+ * Find and replace text in a column
+ */
+export function findAndReplace(
+    rows: Record<string, any>[],
+    column: string,
+    find: string,
+    replace: string,
+    useRegex: boolean,
+    matchCase: boolean
+): { rows: Record<string, any>[]; affected: number } {
+    let affected = 0;
+    let regex: RegExp | null = null;
+
+    if (useRegex) {
+        try {
+            regex = new RegExp(find, matchCase ? 'g' : 'gi');
+        } catch (e) {
+            return { rows, affected: 0 }; // Invalid regex
+        }
+    }
+
+    const newRows = rows.map(r => {
+        const original = String(r[column] ?? '');
+        let newVal = original;
+
+        if (useRegex && regex) {
+            newVal = original.replace(regex, replace);
+        } else {
+            if (matchCase) {
+                newVal = original.split(find).join(replace);
+            } else {
+                // Case insensitive string replace
+                const lowerOrg = original.toLowerCase();
+                const lowerFind = find.toLowerCase();
+                let result = '';
+                let searchIdx = 0;
+                let foundIdx = lowerOrg.indexOf(lowerFind, searchIdx);
+
+                while (foundIdx !== -1) {
+                    result += original.slice(searchIdx, foundIdx) + replace;
+                    searchIdx = foundIdx + find.length;
+                    foundIdx = lowerOrg.indexOf(lowerFind, searchIdx);
+                }
+                result += original.slice(searchIdx);
+                newVal = result;
+            }
+        }
+
+        if (newVal !== original) {
+            affected++;
+            return { ...r, [column]: newVal };
+        }
+        return r;
+    });
+
+    return { rows: newRows, affected };
+}
+
+/**
+ * Split a column into multiple columns by delimiter
+ */
+export function splitColumn(
+    rows: Record<string, any>[],
+    headers: string[],
+    column: string,
+    delimiter: string
+): { rows: Record<string, any>[]; headers: string[]; affected: number } {
+    let affected = 0;
+    let maxParts = 0;
+
+    // First pass to determine max parts
+    rows.forEach(r => {
+        const val = String(r[column] ?? '');
+        if (val.includes(delimiter)) {
+            const parts = val.split(delimiter);
+            if (parts.length > maxParts) maxParts = parts.length;
+        }
+    });
+
+    if (maxParts <= 1) return { rows, headers, affected: 0 };
+
+    // Generate new headers
+    const newHeaders = [...headers];
+    const colIndex = newHeaders.indexOf(column);
+    const generatedHeaders: string[] = [];
+
+    for (let i = 1; i <= maxParts; i++) {
+        let newName = `${column}_${i}`;
+        let counter = 1;
+        while (newHeaders.includes(newName) || generatedHeaders.includes(newName)) {
+            newName = `${column}_${i}_${counter++}`;
+        }
+        generatedHeaders.push(newName);
+    }
+
+    // Insert new headers after the original column
+    newHeaders.splice(colIndex + 1, 0, ...generatedHeaders);
+
+    const newRows = rows.map(r => {
+        const val = String(r[column] ?? '');
+        if (val.includes(delimiter)) {
+            affected++;
+            const parts = val.split(delimiter);
+            const newRow = { ...r };
+            generatedHeaders.forEach((h, idx) => {
+                newRow[h] = parts[idx] || '';
+            });
+            return newRow;
+        }
+        return r;
+    });
+
+    return { rows: newRows, headers: newHeaders, affected };
+}
+
+/**
+ * Combine multiple columns into one
+ */
+export function combineColumns(
+    rows: Record<string, any>[],
+    headers: string[],
+    columns: string[],
+    separator: string,
+    newColumnName: string
+): { rows: Record<string, any>[]; headers: string[]; affected: number } {
+    if (columns.length < 2 || !newColumnName) return { rows, headers, affected: 0 };
+
+    const newHeaders = [...headers];
+    if (!newHeaders.includes(newColumnName)) {
+        newHeaders.push(newColumnName);
+    }
+
+    const newRows = rows.map(r => {
+        const parts = columns.map(c => String(r[c] ?? ''));
+        const combined = parts.join(separator);
+        return { ...r, [newColumnName]: combined };
+    });
+
+    return { rows: newRows, headers: newHeaders, affected: rows.length };
+}
