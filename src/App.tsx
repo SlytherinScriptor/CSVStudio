@@ -3,16 +3,18 @@ import './App.css';
 import { UpsertPanel } from './components/UpsertPanel';
 import { DeletePanel } from './components/DeletePanel';
 import { ComparePanel } from './components/ComparePanel';
+import { CleanPanel } from './components/CleanPanel';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { Footer } from './components/ui/Footer';
-import { ArrowUpDown, Trash2, GitCompare, Sun, Moon } from 'lucide-react';
+import { ArrowUpDown, Trash2, GitCompare, Sun, Moon, Sparkles } from 'lucide-react';
 
-type Tool = 'upsert' | 'delete' | 'compare';
+type Tool = 'upsert' | 'delete' | 'compare' | 'clean';
 
 const tools = [
     { id: 'upsert' as Tool, label: 'Upsert', icon: ArrowUpDown, description: 'Update & insert rows' },
     { id: 'delete' as Tool, label: 'Delete', icon: Trash2, description: 'Remove rows by ID' },
+    { id: 'clean' as Tool, label: 'Clean', icon: Sparkles, description: 'Fix & standardize data' },
     { id: 'compare' as Tool, label: 'Compare', icon: GitCompare, description: 'Diff two CSV files' },
 ];
 
@@ -72,6 +74,7 @@ function App() {
                         <ErrorBoundary>
                             {activeTool === 'upsert' && <UpsertPanel />}
                             {activeTool === 'delete' && <DeletePanel />}
+                            {activeTool === 'clean' && <CleanPanel />}
                             {activeTool === 'compare' && <ComparePanel />}
                         </ErrorBoundary>
                     </div>

@@ -9,5 +9,3 @@ id,name,email,department,salary
 8,"Fiona Green",,"Marketing",65000
 9,"George Wilson","george.wilson@company.com","Sales",70000
 10,"Helen Clark","helen.clark@company.com","HR",58000
-11,"Kate Miller","kate.miller@company.com","Engineering",85000
-12,"Leo Martinez",,"Sales",73000
