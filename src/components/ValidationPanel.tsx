@@ -10,7 +10,7 @@ import { parseCSVFile } from '../lib/csv';
 import type { ParsedCSV } from '../lib/csv';
 import { validateDataset, ValidationRule, RuleType, ValidationResult, CrossColumnOperator } from '../lib/validationUtils';
 
-type Step = 'upload' | 'rules' | 'results';
+
 
 export function ValidationPanel() {
     const { showToast } = useToast();
