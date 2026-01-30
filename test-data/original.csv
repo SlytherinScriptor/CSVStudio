@@ -1,0 +1,11 @@
+id,name,email,department,salary
+1,"John Smith","john.smith@company.com","Engineering",75000
+2,"Jane Doe","jane.doe@company.com","Marketing",68000
+3,"Bob Johnson","bob.johnson@company.com","Sales",72000
+4,"Alice Williams","alice.williams@company.com","Engineering",82000
+5,"Charlie Brown","charlie.brown@company.com","HR",55000
+6,"Diana Ross","diana.ross@company.com","Finance",78000
+7,"Edward Jones","edward.jones@company.com","Engineering",90000
+8,"Fiona Green",,"Marketing",65000
+9,"George Wilson","george.wilson@company.com","Sales",70000
+10,"Helen Clark","helen.clark@company.com","HR",58000

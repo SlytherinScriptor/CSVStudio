@@ -1,0 +1,6 @@
+id,name,email,department,salary,location
+2,"Jane Doe","jane.doe@company.com","Engineering",75000,"New York"
+4,"Alice Williams","alice.w@company.com","Engineering",95000,"San Francisco"
+7,"Edward Jones","edward.jones@company.com","Management",120000,"Boston"
+11,"Kate Miller","kate.miller@company.com","Engineering",85000,"Seattle"
+12,"Leo Martinez",,"Sales",73000,"Chicago"

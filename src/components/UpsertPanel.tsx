@@ -7,7 +7,7 @@ import { Button } from './ui/Button';
 import { ColumnPicker } from './ui/ColumnPicker';
 import { Table } from './ui/Table';
 import { HelpTooltip } from './ui/HelpTooltip';
-import { parseCSVFile } from '../lib/csv';
+import { parseCSVFile, exportToCSV } from '../lib/csv';
 import type { ParsedCSV } from '../lib/csv';
 
 export function UpsertPanel() {
@@ -158,12 +158,8 @@ export function UpsertPanel() {
             inserted++;
         }
 
-        // Build CSV preserving original format, only modified values change
-        const headerLine = headersOut.join(',');
-        const dataLines = outRows.map(r =>
-            headersOut.map(h => r[h] ?? '').join(',')
-        );
-        const csv = [headerLine, ...dataLines].join('\r\n');
+        // Export CSV with proper quoting
+        const csv = exportToCSV(headersOut, outRows);
 
         navigator.clipboard.writeText(csv).then(() => {
             alert(`Copied to clipboard! Updated: ${updated}, Inserted: ${inserted}`);

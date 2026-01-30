@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import { ColumnPicker } from './ui/ColumnPicker';
 import { Table } from './ui/Table';
 import { HelpTooltip } from './ui/HelpTooltip';
-import { parseCSVFile } from '../lib/csv';
+import { parseCSVFile, exportToCSV } from '../lib/csv';
 import type { ParsedCSV } from '../lib/csv';
 
 export function DeletePanel() {
@@ -103,12 +103,8 @@ export function DeletePanel() {
             return !cleanIds.set.has(probe);
         });
 
-        // Build CSV preserving original format
-        const headerLine = original.headers.join(',');
-        const dataLines = filtered.map(r =>
-            original.headers.map(h => r[h] ?? '').join(',')
-        );
-        const csv = [headerLine, ...dataLines].join('\r\n');
+        // Export CSV with proper quoting
+        const csv = exportToCSV(original.headers, filtered);
 
         navigator.clipboard.writeText(csv).then(() => {
             alert(`Copied to clipboard! Removed: ${original.rows.length - filtered.length}, Remaining: ${filtered.length}`);

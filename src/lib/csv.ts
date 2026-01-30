@@ -34,3 +34,20 @@ export async function parseCSVFile(file: File): Promise<ParsedCSV> {
         });
     });
 }
+
+/**
+ * Export data to CSV string with proper quoting.
+ * All string values are quoted to preserve original formatting.
+ */
+export function exportToCSV(headers: string[], rows: Record<string, any>[]): string {
+    return Papa.unparse(
+        { fields: headers, data: rows },
+        {
+            quotes: true,       // Quote all fields (preserves original formatting)
+            quoteChar: '"',
+            escapeChar: '"',
+            newline: '\r\n'
+        }
+    );
+}
+
