@@ -55,55 +55,98 @@ export async function parseCSVFile(file: File): Promise<ParsedCSV> {
 }
 
 /**
- * Detect quote pattern from a raw CSV line.
- * Returns an object indicating if values are quoted and the quote char used.
+ * Parse a CSV line into individual fields, respecting quotes.
  */
-function detectQuotePattern(rawLine: string): { quoted: boolean; quoteChar: string } {
-    const trimmed = rawLine.trim();
-    if (trimmed.startsWith('"') || trimmed.includes(',"')) {
-        return { quoted: true, quoteChar: '"' };
+function parseCSVLine(line: string): string[] {
+    const fields: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    let quoteChar = '';
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+
+        if (!inQuotes) {
+            if (char === '"' || char === "'") {
+                inQuotes = true;
+                quoteChar = char;
+                current += char;
+            } else if (char === ',') {
+                fields.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        } else {
+            current += char;
+            if (char === quoteChar) {
+                // Check for escaped quote (doubled)
+                if (i + 1 < line.length && line[i + 1] === quoteChar) {
+                    current += line[i + 1];
+                    i++;
+                } else {
+                    inQuotes = false;
+                }
+            }
+        }
     }
-    if (trimmed.startsWith("'") || trimmed.includes(",'")) {
-        return { quoted: true, quoteChar: "'" };
-    }
-    return { quoted: false, quoteChar: '"' };
+    fields.push(current);
+    return fields;
 }
 
 /**
- * Format a single value to match the original quoting style.
- * Only quote if the original pattern used quotes, or if value contains special chars.
+ * Detect per-column quote pattern from a raw CSV line.
+ * Returns an array of booleans indicating if each column was quoted.
  */
-function formatValue(value: any, quoted: boolean, quoteChar: string): string {
+function detectColumnQuotePattern(rawLine: string): boolean[] {
+    const fields = parseCSVLine(rawLine);
+    return fields.map(field => {
+        const trimmed = field.trim();
+        return trimmed.startsWith('"') || trimmed.startsWith("'");
+    });
+}
+
+/**
+ * Format a single value to match the original column quoting style.
+ * Empty values are never quoted (output as empty between commas).
+ */
+function formatValueForColumn(value: any, shouldQuote: boolean): string {
     const str = String(value ?? '');
 
-    // Always quote if value contains comma, newline, or the quote char itself
-    const needsQuoting = str.includes(',') || str.includes('\n') || str.includes('\r') || str.includes(quoteChar);
+    // Empty values are never quoted - they appear as just empty between commas
+    if (str === '') {
+        return '';
+    }
 
-    if (needsQuoting || quoted) {
-        // Escape any existing quote chars by doubling them
-        const escaped = str.replace(new RegExp(quoteChar, 'g'), quoteChar + quoteChar);
-        return quoteChar + escaped + quoteChar;
+    // Always quote if value contains comma, newline, or quotes
+    const needsQuoting = str.includes(',') || str.includes('\n') || str.includes('\r') || str.includes('"');
+
+    if (needsQuoting || shouldQuote) {
+        // Escape any existing quotes by doubling them
+        const escaped = str.replace(/"/g, '""');
+        return '"' + escaped + '"';
     }
 
     return str;
 }
 
 /**
- * Build a CSV line from row data using detected quote pattern.
+ * Build a CSV line from row data using per-column quote pattern.
  */
-function buildLine(row: Record<string, any>, headers: string[], quoted: boolean, quoteChar: string): string {
-    return headers.map(h => formatValue(row[h], quoted, quoteChar)).join(',');
+function buildLineWithPattern(
+    row: Record<string, any>,
+    headers: string[],
+    columnQuotePattern: boolean[]
+): string {
+    return headers.map((h, i) => {
+        const shouldQuote = columnQuotePattern[i] ?? false;
+        return formatValueForColumn(row[h], shouldQuote);
+    }).join(',');
 }
 
 /**
  * Format-preserving CSV export.
- * For unchanged rows, uses the original raw line. For changed rows, rebuilds with the same quote style.
- * 
- * @param headers - Output headers
- * @param rows - Output row data
- * @param originalCSV - Original parsed CSV (for format detection and raw lines)
- * @param keyColumn - Column to use for matching rows
- * @param changedKeys - Set of key values that were modified (these rows will be rebuilt)
+ * For unchanged rows, uses the original raw line. For changed rows, rebuilds with the same per-column quote style.
  */
 export function formatPreservingExport(
     headers: string[],
@@ -112,19 +155,17 @@ export function formatPreservingExport(
     keyColumn: string,
     changedKeys: Set<string>
 ): string {
-    // Detect quote pattern from original file
-    const headerPattern = detectQuotePattern(originalCSV.rawHeaderLine);
-    const dataPattern = originalCSV.rawLines[0]
-        ? detectQuotePattern(originalCSV.rawLines[0])
-        : headerPattern;
+    // Detect per-column quote pattern from original file
+    const headerQuotePattern = detectColumnQuotePattern(originalCSV.rawHeaderLine);
+    const dataQuotePattern = originalCSV.rawLines[0]
+        ? detectColumnQuotePattern(originalCSV.rawLines[0])
+        : headerQuotePattern;
 
-    // Build header line
-    const headerLine = buildLine(
-        Object.fromEntries(headers.map(h => [h, h])),
-        headers,
-        headerPattern.quoted,
-        headerPattern.quoteChar
-    );
+    // Build header line with original pattern
+    const headerLine = headers.map((h, i) => {
+        const shouldQuote = headerQuotePattern[i] ?? false;
+        return formatValueForColumn(h, shouldQuote);
+    }).join(',');
 
     // Build original row lookup by key
     const originalRawByKey = new Map<string, string>();
@@ -135,17 +176,21 @@ export function formatPreservingExport(
         }
     });
 
+    // Check if headers changed (union mode adds columns)
+    const headersChanged = headers.length !== originalCSV.headers.length ||
+        !headers.every((h, i) => h === originalCSV.headers[i]);
+
     // Build data lines
     const dataLines = rows.map(row => {
         const key = String(row[keyColumn] ?? '').trim();
 
-        // If this row wasn't changed and we have the original raw line, use it
-        if (!changedKeys.has(key) && originalRawByKey.has(key)) {
+        // If this row wasn't changed, headers are same, and we have the original raw line, use it
+        if (!changedKeys.has(key) && !headersChanged && originalRawByKey.has(key)) {
             return originalRawByKey.get(key)!;
         }
 
-        // Otherwise, rebuild the line with the detected pattern
-        return buildLine(row, headers, dataPattern.quoted, dataPattern.quoteChar);
+        // Otherwise, rebuild the line with the detected per-column pattern
+        return buildLineWithPattern(row, headers, dataQuotePattern);
     });
 
     return [headerLine, ...dataLines].join('\r\n');
@@ -166,5 +211,6 @@ export function exportToCSV(headers: string[], rows: Record<string, any>[]): str
         }
     );
 }
+
 
 
