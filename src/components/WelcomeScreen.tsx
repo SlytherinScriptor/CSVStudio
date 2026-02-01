@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './Welcome.css';
+import { Footer } from './ui/Footer';
 
 interface WelcomeScreenProps {
     onNavigate: (toolId: string) => void;
@@ -130,16 +131,10 @@ export function WelcomeScreen({ onNavigate, onLoadSample }: WelcomeScreenProps) 
                     </div>
                 </section>
 
-                {/* TIER 3: STATS & FOOTER */}
-                <section className="footer-section animate-slide-up delay-400">
-                    {/* Stats Removed for Cleaner Look */}
-
-                    <div className="bottom-cta">
-                        <p className="text-sm text-gray-500">v2.1 Stable Build</p>
-                    </div>
-                </section>
             </div>
 
+            {/* FOOTER - Blends naturally at bottom */}
+            <Footer />
         </div>
     );
 }

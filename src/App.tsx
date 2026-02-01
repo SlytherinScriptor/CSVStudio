@@ -14,7 +14,6 @@ import { generateSampleData } from './lib/sampleData';
 import { ToastProvider } from './components/ui/Toast';
 
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { Footer } from './components/ui/Footer';
 import {
     ArrowUpDown, Trash2, GitCompare, Sun, Moon, Wand2, ShieldCheck,
     Table2, BarChart3, FileJson, ChevronDown, FileText
@@ -202,8 +201,6 @@ export default function App() {
                         </ErrorBoundary>
                     </div>
                 </main>
-
-                <Footer />
             </div>
 
         </ToastProvider>
