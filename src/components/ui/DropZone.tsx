@@ -9,6 +9,7 @@ interface DropZoneProps {
     name?: string;
     rowCount?: number;
     columnCount?: number;
+    hint?: string;
 }
 
 const MAX_FILE_SIZE_MB = 50;
@@ -37,10 +38,17 @@ export function DropZone({
         setIsDrag(false);
     };
 
+    // Get accepted formats for display
+    const acceptedFormats = accept.split(',').map(ext => ext.trim().replace('.', '').toUpperCase()).join(', ');
+
     const validateAndProcessFile = (file: File) => {
+        // Get accepted extensions from accept prop
+        const acceptedExts = accept.split(',').map(ext => ext.trim().toLowerCase());
+        const fileName = file.name.toLowerCase();
+
         // Check file type
-        if (!file.name.toLowerCase().endsWith('.csv')) {
-            showToast('Please upload a CSV file', 'error');
+        if (!acceptedExts.some(ext => fileName.endsWith(ext.replace('*', '')))) {
+            showToast(`Please upload a ${acceptedFormats} file`, 'error');
             return;
         }
 
@@ -114,10 +122,10 @@ export function DropZone({
                         ? 'Processing...'
                         : hasFile
                             ? 'Click to replace file'
-                            : 'Drag CSV file here or click to browse'}
+                            : `Drag ${acceptedFormats} file here or click to browse`}
                 </span>
                 {!hasFile && !isLoading && (
-                    <span className="drop-hint">Max file size: {MAX_FILE_SIZE_MB}MB</span>
+                    <span className="drop-hint">Supports: {acceptedFormats} • Max: {MAX_FILE_SIZE_MB}MB</span>
                 )}
             </div>
             {name && (

@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import type { ParsedData } from './fileParser';
 
 export interface ParsedCSV {
     rows: Record<string, any>[];
@@ -151,14 +152,23 @@ function buildLineWithPattern(
 export function formatPreservingExport(
     headers: string[],
     rows: Record<string, any>[],
-    originalCSV: ParsedCSV,
+    originalCSV: ParsedCSV | ParsedData,
     keyColumn: string,
     changedKeys: Set<string>
 ): string {
+    // If no raw lines available, fallback to simple export
+    if (!originalCSV.rawLines || !originalCSV.rawHeaderLine) {
+        return exportToCSV(headers, rows);
+    }
+
+    // Capture verified raw lines for use in callbacks
+    const rawLines = originalCSV.rawLines;
+    const rawHeaderLine = originalCSV.rawHeaderLine;
+
     // Detect per-column quote pattern from original file
-    const headerQuotePattern = detectColumnQuotePattern(originalCSV.rawHeaderLine);
-    const dataQuotePattern = originalCSV.rawLines[0]
-        ? detectColumnQuotePattern(originalCSV.rawLines[0])
+    const headerQuotePattern = detectColumnQuotePattern(rawHeaderLine);
+    const dataQuotePattern = rawLines[0]
+        ? detectColumnQuotePattern(rawLines[0])
         : headerQuotePattern;
 
     // Build header line with original pattern
@@ -171,8 +181,8 @@ export function formatPreservingExport(
     const originalRawByKey = new Map<string, string>();
     originalCSV.rows.forEach((row, i) => {
         const key = String(row[keyColumn] ?? '').trim();
-        if (key && originalCSV.rawLines[i]) {
-            originalRawByKey.set(key, originalCSV.rawLines[i]);
+        if (key && rawLines[i]) {
+            originalRawByKey.set(key, rawLines[i]);
         }
     });
 

@@ -7,8 +7,7 @@ import { Stepper } from './ui/Stepper';
 import { Button } from './ui/Button';
 import { ColumnPicker } from './ui/ColumnPicker';
 import { Table } from './ui/Table';
-import { parseCSVFile } from '../lib/csv';
-import type { ParsedCSV } from '../lib/csv';
+import { parseTabularFile, ACCEPTED_TABULAR_FORMATS, type ParsedData } from '../lib/fileParser';
 
 interface DiffResult {
     added: any[];
@@ -20,8 +19,8 @@ interface DiffResult {
 
 export function ComparePanel() {
     const [step, setStep] = useState(1);
-    const [baseCSV, setBaseCSV] = useState<ParsedCSV | null>(null);
-    const [compareCSV, setCompareCSV] = useState<ParsedCSV | null>(null);
+    const [baseData, setBaseData] = useState<ParsedData | null>(null);
+    const [compareData, setCompareData] = useState<ParsedData | null>(null);
     const [key, setKey] = useState('');
     const [options, setOptions] = useState({ trim: true, ci: false });
 
@@ -33,23 +32,23 @@ export function ComparePanel() {
 
     // File handlers
     const handleBase = async (f: File) => {
-        const p = await parseCSVFile(f);
-        setBaseCSV(p);
-        if (compareCSV) setStep(2);
+        const p = await parseTabularFile(f);
+        setBaseData(p);
+        if (compareData) setStep(2);
     };
 
     const handleCompare = async (f: File) => {
-        const p = await parseCSVFile(f);
-        setCompareCSV(p);
-        if (baseCSV) setStep(2);
+        const p = await parseTabularFile(f);
+        setCompareData(p);
+        if (baseData) setStep(2);
     };
 
     // Common headers for key selection
     const commonHeaders = useMemo(() => {
-        if (!baseCSV || !compareCSV) return [];
-        const setA = new Set(baseCSV.headers);
-        return compareCSV.headers.filter(h => setA.has(h));
-    }, [baseCSV, compareCSV]);
+        if (!baseData || !compareData) return [];
+        const setA = new Set(baseData.headers);
+        return compareData.headers.filter(h => setA.has(h));
+    }, [baseData, compareData]);
 
     // Auto-select first common header as key
     useEffect(() => {
@@ -60,7 +59,7 @@ export function ComparePanel() {
 
     // Compute diff
     const handleCompareClick = () => {
-        if (!baseCSV || !compareCSV || !key) return;
+        if (!baseData || !compareData || !key) return;
 
         const { trim, ci } = options;
 
@@ -74,21 +73,21 @@ export function ComparePanel() {
 
         // Build maps by key
         const baseMap = new Map<string, any>();
-        baseCSV.rows.forEach(r => {
+        baseData.rows.forEach(r => {
             const id = normalize(r[key]);
             if (id) baseMap.set(id, r);
         });
 
         const compareMap = new Map<string, any>();
-        compareCSV.rows.forEach(r => {
+        compareData.rows.forEach(r => {
             const id = normalize(r[key]);
             if (id) compareMap.set(id, r);
         });
 
         // Union of all headers
-        const allHeaders = [...baseCSV.headers];
+        const allHeaders = [...baseData.headers];
         const seen = new Set(allHeaders);
-        compareCSV.headers.forEach(h => {
+        compareData.headers.forEach(h => {
             if (!seen.has(h)) {
                 allHeaders.push(h);
                 seen.add(h);
@@ -170,8 +169,8 @@ export function ComparePanel() {
     };
 
     const handleReset = () => {
-        setBaseCSV(null);
-        setCompareCSV(null);
+        setBaseData(null);
+        setCompareData(null);
         setKey('');
         setDiffResult(null);
         setStep(1);
@@ -195,20 +194,22 @@ export function ComparePanel() {
             <div style={{ display: step >= 1 ? 'block' : 'none' }}>
                 <div className="grid grid-2">
                     <DropZone
-                        label="Base CSV (original)"
+                        label="Base Data (original)"
                         onFile={handleBase}
-                        name={baseCSV ? `✔ ${baseCSV.name} (${baseCSV.rows.length} rows)` : ''}
+                        accept={ACCEPTED_TABULAR_FORMATS}
+                        name={baseData ? `✔ ${baseData.name} (${baseData.rows.length} rows)` : ''}
                     />
                     <DropZone
-                        label="Compare CSV (new version)"
+                        label="Compare Data (new version)"
                         onFile={handleCompare}
-                        name={compareCSV ? `✔ ${compareCSV.name} (${compareCSV.rows.length} rows)` : ''}
+                        accept={ACCEPTED_TABULAR_FORMATS}
+                        name={compareData ? `✔ ${compareData.name} (${compareData.rows.length} rows)` : ''}
                     />
                 </div>
             </div>
 
             {/* Step 2: Configuration */}
-            {baseCSV && compareCSV && (
+            {baseData && compareData && (
                 <div style={{ marginTop: 12 }}>
                     <div className="grid grid-2">
                         <Card>
@@ -244,10 +245,10 @@ export function ComparePanel() {
             )}
 
             {/* Column Picker */}
-            {baseCSV && compareCSV && key && (
+            {baseData && compareData && key && (
                 <div style={{ marginTop: 12 }}>
                     <ColumnPicker
-                        allHeaders={diffResult ? diffResult.allHeaders : [...new Set([...baseCSV.headers, ...compareCSV.headers])]}
+                        allHeaders={diffResult ? diffResult.allHeaders : [...new Set([...baseData.headers, ...compareData.headers])]}
                         selected={selectedCols}
                         onChange={setSelectedCols}
                     />
@@ -255,7 +256,7 @@ export function ComparePanel() {
             )}
 
             {/* Actions */}
-            {baseCSV && compareCSV && (
+            {baseData && compareData && (
                 <div style={{ marginTop: 12 }}>
                     <Card>
                         <div className="actions">

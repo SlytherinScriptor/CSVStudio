@@ -14,6 +14,9 @@
     --border: rgba(255, 255, 255, 0.08);
     --border-strong: rgba(255, 255, 255, 0.15);
 
+    --glass-bg: rgba(26, 26, 36, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+
     --text: #f4f4f5;
     --text-secondary: #a1a1aa;
     --text-muted: #71717a;
@@ -47,6 +50,9 @@
     --surface-hover: #f4f4f5;
     --border: rgba(0, 0, 0, 0.08);
     --border-strong: rgba(0, 0, 0, 0.15);
+
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(0, 0, 0, 0.08);
 
     --text: #18181b;
     --text-secondary: #52525b;

@@ -159,12 +159,18 @@ export function DeletePanel() {
             <div className="grid grid-2" style={{ marginTop: 12 }}>
                 <Card>
                     <label>Paste IDs (one per line, or comma/semicolon/tab separated)</label>
-                    <textarea
-                        rows={8}
-                        placeholder="Paste IDs here…"
-                        value={idsText}
-                        onChange={e => setIdsText(e.target.value)}
-                    />
+                    <div className="textarea-container" style={{ position: 'relative' }}>
+                        <textarea
+                            rows={10}
+                            placeholder="Paste IDs here (one per line, comma separated)..."
+                            value={idsText}
+                            onChange={e => setIdsText(e.target.value)}
+                            style={{ minHeight: '180px', width: '100%', paddingBottom: '24px' }}
+                        />
+                        <div style={{ position: 'absolute', bottom: '8px', right: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px' }}>
+                            {idsText.length} chars
+                        </div>
+                    </div>
                     <div className="actions" style={{ marginTop: 8 }}>
                         <label>
                             <input type="checkbox" checked={options.trim} onChange={e => setOptions({ ...options, trim: e.target.checked })} />
