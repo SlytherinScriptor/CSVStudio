@@ -21,7 +21,7 @@ export function ProfilePanel() {
     const { showToast } = useToast();
     const [data, setData] = useState<ParsedData | null>(null);
     const [loading, setLoading] = useState(false);
-    const [activeFile, setActiveFile] = useState<File | null>(null);
+
 
     // Alias for compatibility
     const parsedData = data;
@@ -47,7 +47,6 @@ export function ProfilePanel() {
 
     const handleClear = () => {
         setData(null);
-        setActiveFile(null);
     };
 
     const handleFile = async (file: File) => {
@@ -55,7 +54,6 @@ export function ProfilePanel() {
         try {
             const parsed = await parseTabularFile(file);
             setData(parsed);
-            setActiveFile(file);
             showToast(`${file.name} loaded successfully`, 'success');
         } catch (error) {
             showToast('Failed to parse file', 'error');
