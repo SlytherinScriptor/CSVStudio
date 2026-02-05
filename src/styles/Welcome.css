@@ -21,7 +21,7 @@
 /* LAYOUT STRUCTURE */
 .welcome-wrapper-integrated {
     width: 100%;
-    min-height: 100vh;
+    min-height: 100%;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -172,6 +172,14 @@
     color: var(--text-tertiary);
     max-width: 700px;
     margin-bottom: 8px;
+}
+
+[data-theme="light"] .welcome-wrapper-integrated {
+    --text-primary: #0f172a;
+    --text-secondary: #1f2937;
+    --text-tertiary: #475569;
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --bg-hover: rgba(248, 250, 252, 0.95);
 }
 
 .highlight {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import './Welcome.css';
+import '../styles/Welcome.css';
 import { Footer } from './ui/Footer';
 
 interface WelcomeScreenProps {
