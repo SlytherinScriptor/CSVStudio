@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import './styles/App.css';
 import { UpsertPanel } from './components/UpsertPanel';
 import { DeletePanel } from './components/DeletePanel';
 import { ComparePanel } from './components/ComparePanel';

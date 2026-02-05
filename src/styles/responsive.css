@@ -1,0 +1,33 @@
+@media (max-width: 1100px) {
+  .sidebar {
+    transform: translateX(-110%);
+    transition: transform 0.2s ease;
+  }
+
+  .app-shell.has-sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .mobile-header {
+    display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-header,
+  .content-body {
+    padding: var(--space-6);
+  }
+
+  .welcome-content-grid {
+    padding: var(--space-6);
+  }
+
+  .card {
+    padding: var(--space-5);
+  }
+}
