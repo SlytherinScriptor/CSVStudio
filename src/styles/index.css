@@ -1,7 +1,31 @@
-@import './variables.css';
-@import './themes.css';
-@import './layout.css';
-@import './components.css';
-@import './responsive.css';
+/* ========================================
+   CSVStudio Main Stylesheet
+   Import Order Matters!
+   ======================================== */
 
-.grow { flex: 1; }
+/* 1. Design Tokens & Variables */
+@import './variables.css';
+
+/* 2. Theme Definitions */
+@import './themes.css';
+
+/* 3. Layout & Typography */
+@import './layout.css';
+
+/* 4. Animation System */
+@import './animations.css';
+
+/* 5. UI Components */
+@import './components.css';
+
+/* 6. Welcome Screen & Footer */
+@import './welcome.css';
+
+/* 7. Chart Components */
+@import './charts.css';
+
+/* 8. Panel Styles */
+@import './panels.css';
+
+/* 9. Responsive Breakpoints (Last) */
+@import './responsive.css';

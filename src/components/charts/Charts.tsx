@@ -5,40 +5,123 @@
 
 import React from 'react';
 
-// ===== BAR CHART =====
+// ===== BAR CHART (Vertical) =====
 interface BarChartProps {
     data: { label: string; value: number; color?: string }[];
     height?: number;
     showValues?: boolean;
-    animate?: boolean;
 }
 
-export function BarChart({ data, height = 200, showValues = true, animate = true }: BarChartProps) {
+export function BarChart({ data, height = 200, showValues = true }: BarChartProps) {
     const maxValue = Math.max(...data.map(d => d.value), 1);
+    const barAreaHeight = height - 40; // Reserve space for labels
+
+    if (data.length === 0) {
+        return <div className="chart-empty">No data to display</div>;
+    }
 
     return (
-        <div className="chart-bar" style={{ height }}>
-            <div className="bar-container">
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                height: `${height}px`,
+                padding: '8px 0'
+            }}
+        >
+            {/* Bar area */}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    gap: '8px',
+                    flex: 1,
+                    minHeight: 0,
+                    paddingTop: '32px' // Space for value labels
+                }}
+            >
                 {data.map((item, i) => {
-                    const barHeight = (item.value / maxValue) * 100;
+                    const barHeight = Math.max(4, (item.value / maxValue) * barAreaHeight);
+                    const barColor = item.color || 'linear-gradient(180deg, #6366F1 0%, #8B5CF6 100%)';
+
                     return (
-                        <div key={i} className="bar-item">
-                            <div
-                                className="bar-fill"
-                                style={{
-                                    height: `${barHeight}%`,
-                                    background: item.color || 'var(--accent)',
-                                    animationDelay: animate ? `${i * 50}ms` : '0ms'
-                                }}
-                            >
+                        <div
+                            key={i}
+                            style={{
+                                flex: 1,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'flex-end',
+                                minWidth: '40px',
+                                height: '100%'
+                            }}
+                        >
+                            {/* Bar with value */}
+                            <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
                                 {showValues && item.value > 0 && (
-                                    <span className="bar-value">{item.value.toLocaleString()}</span>
+                                    <span
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: `${barHeight + 8}px`,
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            color: 'var(--text-primary)',
+                                            background: 'var(--bg-surface)',
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                                            border: '1px solid var(--border-color)',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {item.value.toLocaleString()}
+                                    </span>
                                 )}
+                                <div
+                                    style={{
+                                        width: '80%',
+                                        maxWidth: '48px',
+                                        height: `${barHeight}px`,
+                                        background: barColor,
+                                        borderRadius: '6px 6px 0 0',
+                                        transition: 'height 0.3s ease'
+                                    }}
+                                />
                             </div>
-                            <span className="bar-label" title={item.label}>{item.label}</span>
                         </div>
                     );
                 })}
+            </div>
+
+            {/* Labels row */}
+            <div
+                style={{
+                    display: 'flex',
+                    gap: '8px',
+                    paddingTop: '8px',
+                    borderTop: '1px solid var(--border-color)'
+                }}
+            >
+                {data.map((item, i) => (
+                    <div
+                        key={i}
+                        style={{
+                            flex: 1,
+                            textAlign: 'center',
+                            fontSize: '11px',
+                            color: 'var(--text-muted)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            minWidth: '40px'
+                        }}
+                        title={item.label}
+                    >
+                        {item.label}
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -53,30 +136,65 @@ interface HorizontalBarProps {
 export function HorizontalBar({ data, maxLabelWidth = 120 }: HorizontalBarProps) {
     const maxValue = Math.max(...data.map(d => d.value), 1);
 
+    if (data.length === 0) {
+        return <div className="chart-empty">No data to display</div>;
+    }
+
     return (
-        <div className="chart-horizontal-bar">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
             {data.map((item, i) => (
-                <div key={i} className="hbar-row">
-                    <span className="hbar-label" style={{ width: maxLabelWidth }} title={item.label}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span
+                        style={{
+                            width: maxLabelWidth,
+                            fontSize: '13px',
+                            color: 'var(--text-secondary)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
+                        }}
+                        title={item.label}
+                    >
                         {item.label}
                     </span>
-                    <div className="hbar-track">
+                    <div
+                        style={{
+                            flex: 1,
+                            height: '14px',
+                            background: 'var(--bg-soft)',
+                            borderRadius: '7px',
+                            overflow: 'hidden'
+                        }}
+                    >
                         <div
-                            className="hbar-fill"
                             style={{
                                 width: `${(item.value / maxValue) * 100}%`,
-                                background: item.color || 'linear-gradient(90deg, var(--accent), #c084fc)'
+                                height: '100%',
+                                background: item.color || 'linear-gradient(90deg, #6366F1, #8B5CF6)',
+                                borderRadius: '7px',
+                                transition: 'width 0.5s ease'
                             }}
                         />
                     </div>
-                    <span className="hbar-value">{item.value.toLocaleString()}</span>
+                    <span
+                        style={{
+                            minWidth: '50px',
+                            textAlign: 'right',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: 'var(--text-primary)'
+                        }}
+                    >
+                        {item.value.toLocaleString()}
+                    </span>
                 </div>
             ))}
         </div>
     );
 }
 
-// ===== PIE CHART =====
+// ===== DONUT/PIE CHART =====
 interface PieChartProps {
     data: { label: string; value: number; color: string }[];
     size?: number;
@@ -87,45 +205,73 @@ export function PieChart({ data, size = 160, showLegend = true }: PieChartProps)
     const total = data.reduce((sum, d) => sum + d.value, 0);
     if (total === 0) return <div className="chart-empty">No data</div>;
 
-    let cumulativePercent = 0;
-    const segments = data.map(item => {
-        const percent = (item.value / total) * 100;
-        const startAngle = cumulativePercent * 3.6; // 3.6 = 360/100
-        cumulativePercent += percent;
-        return { ...item, percent, startAngle };
-    });
-
     // Create conic gradient
     let gradientStops = '';
     let currentPercent = 0;
-    segments.forEach(seg => {
-        gradientStops += `${seg.color} ${currentPercent}% ${currentPercent + seg.percent}%`;
-        currentPercent += seg.percent;
-        if (currentPercent < 100) gradientStops += ', ';
+    data.forEach((item, i) => {
+        const percent = (item.value / total) * 100;
+        gradientStops += `${item.color} ${currentPercent}% ${currentPercent + percent}%`;
+        currentPercent += percent;
+        if (i < data.length - 1) gradientStops += ', ';
     });
 
     return (
-        <div className="chart-pie-container">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+            {/* Donut */}
             <div
-                className="chart-pie"
                 style={{
                     width: size,
                     height: size,
-                    background: `conic-gradient(${gradientStops})`
+                    borderRadius: '50%',
+                    background: `conic-gradient(${gradientStops})`,
+                    position: 'relative',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                 }}
             >
-                <div className="pie-center">
-                    <span className="pie-total">{total.toLocaleString()}</span>
-                    <span className="pie-label">Total</span>
+                {/* Center hole */}
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '60%',
+                        height: '60%',
+                        background: 'var(--bg-surface)',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {total.toLocaleString()}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Total</span>
                 </div>
             </div>
+
+            {/* Legend */}
             {showLegend && (
-                <div className="pie-legend">
-                    {segments.map((seg, i) => (
-                        <div key={i} className="legend-item">
-                            <span className="legend-dot" style={{ background: seg.color }} />
-                            <span className="legend-label">{seg.label}</span>
-                            <span className="legend-value">{seg.percent.toFixed(1)}%</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {data.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span
+                                style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '50%',
+                                    background: item.color,
+                                    flexShrink: 0
+                                }}
+                            />
+                            <span style={{ fontSize: '13px', color: 'var(--text-secondary)', flex: 1 }}>
+                                {item.label}
+                            </span>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                {((item.value / total) * 100).toFixed(1)}%
+                            </span>
                         </div>
                     ))}
                 </div>
@@ -143,7 +289,7 @@ interface SparkLineProps {
     showDots?: boolean;
 }
 
-export function SparkLine({ data, width = 120, height = 32, color = 'var(--accent)', showDots = false }: SparkLineProps) {
+export function SparkLine({ data, width = 120, height = 32, color = '#6366F1', showDots = false }: SparkLineProps) {
     if (data.length < 2) return null;
 
     const min = Math.min(...data);
@@ -152,14 +298,14 @@ export function SparkLine({ data, width = 120, height = 32, color = 'var(--accen
 
     const points = data.map((val, i) => {
         const x = (i / (data.length - 1)) * width;
-        const y = height - ((val - min) / range) * height;
+        const y = height - ((val - min) / range) * (height - 4) - 2;
         return { x, y, value: val };
     });
 
     const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
 
     return (
-        <svg className="chart-sparkline" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        <svg width={width} height={height} style={{ display: 'block' }}>
             <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             {showDots && points.map((p, i) => (
                 <circle key={i} cx={p.x} cy={p.y} r="3" fill={color} />
@@ -186,13 +332,13 @@ export function QualityGauge({ score, size = 120, label = 'Quality' }: QualityGa
     };
 
     return (
-        <div className="chart-gauge" style={{ width: size }}>
-            <svg viewBox="0 0 100 60" className="gauge-svg">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: size }}>
+            <svg viewBox="0 0 100 60" style={{ width: '100%', height: 'auto' }}>
                 {/* Background arc */}
                 <path
                     d="M 10 50 A 40 40 0 0 1 90 50"
                     fill="none"
-                    stroke="var(--surface)"
+                    stroke="var(--bg-soft)"
                     strokeWidth="8"
                     strokeLinecap="round"
                 />
@@ -204,7 +350,6 @@ export function QualityGauge({ score, size = 120, label = 'Quality' }: QualityGa
                     strokeWidth="8"
                     strokeLinecap="round"
                     strokeDasharray={`${normalizedScore * 1.26} 126`}
-                    className="gauge-fill"
                 />
                 {/* Needle */}
                 <line
@@ -212,16 +357,19 @@ export function QualityGauge({ score, size = 120, label = 'Quality' }: QualityGa
                     y1="50"
                     x2="50"
                     y2="18"
-                    stroke="var(--text)"
+                    stroke="var(--text-primary)"
                     strokeWidth="2"
                     strokeLinecap="round"
                     transform={`rotate(${rotation} 50 50)`}
-                    className="gauge-needle"
                 />
-                <circle cx="50" cy="50" r="4" fill="var(--text)" />
+                <circle cx="50" cy="50" r="4" fill="var(--text-primary)" />
             </svg>
-            <div className="gauge-value" style={{ color: getColor() }}>{normalizedScore}%</div>
-            <div className="gauge-label">{label}</div>
+            <div style={{ fontSize: '24px', fontWeight: 700, color: getColor(), lineHeight: 1, marginTop: '-8px' }}>
+                {normalizedScore}%
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {label}
+            </div>
         </div>
     );
 }
@@ -238,15 +386,59 @@ interface StatCardProps {
 
 export function StatCard({ title, value, subtitle, icon, trend, color }: StatCardProps) {
     return (
-        <div className="chart-stat-card">
-            {icon && <div className="stat-icon" style={{ color: color || 'var(--accent)' }}>{icon}</div>}
-            <div className="stat-content">
-                <span className="stat-title">{title}</span>
-                <span className="stat-value" style={{ color }}>{typeof value === 'number' ? value.toLocaleString() : value}</span>
-                {subtitle && <span className="stat-subtitle">{subtitle}</span>}
+        <div
+            style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '16px',
+                padding: '20px',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                transition: 'all 0.2s ease'
+            }}
+        >
+            {icon && (
+                <div
+                    style={{
+                        width: '48px',
+                        height: '48px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'var(--color-primary-soft)',
+                        borderRadius: '12px',
+                        color: color || 'var(--color-primary)',
+                        flexShrink: 0
+                    }}
+                >
+                    {icon}
+                </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {title}
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 700, color: color || 'var(--text-primary)', lineHeight: 1.2 }}>
+                    {typeof value === 'number' ? value.toLocaleString() : value}
+                </div>
+                {subtitle && (
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                        {subtitle}
+                    </div>
+                )}
             </div>
             {trend && (
-                <div className={`stat-trend ${trend.isPositive ? 'positive' : 'negative'}`}>
+                <div
+                    style={{
+                        padding: '4px 8px',
+                        borderRadius: '100px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        background: trend.isPositive ? 'var(--success-soft)' : 'var(--error-soft)',
+                        color: trend.isPositive ? 'var(--success)' : 'var(--error)'
+                    }}
+                >
                     {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
                 </div>
             )}
@@ -270,8 +462,62 @@ export function TypeBadge({ type }: TypeBadgeProps) {
     };
 
     return (
-        <span className="type-badge" style={{ background: `${colors[type]}20`, color: colors[type] }}>
+        <span
+            style={{
+                display: 'inline-flex',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.03em',
+                background: `${colors[type]}20`,
+                color: colors[type]
+            }}
+        >
             {type}
         </span>
+    );
+}
+
+// ===== PROGRESS BAR =====
+interface ProgressBarProps {
+    value: number; // 0-100
+    color?: string;
+    height?: number;
+    showLabel?: boolean;
+}
+
+export function ProgressBar({ value, color, height = 8, showLabel = false }: ProgressBarProps) {
+    const normalizedValue = Math.max(0, Math.min(100, value));
+    const barColor = color || (normalizedValue >= 80 ? '#10b981' : normalizedValue >= 50 ? '#f59e0b' : '#ef4444');
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+            <div
+                style={{
+                    flex: 1,
+                    height: `${height}px`,
+                    background: 'var(--bg-soft)',
+                    borderRadius: `${height / 2}px`,
+                    overflow: 'hidden'
+                }}
+            >
+                <div
+                    style={{
+                        width: `${normalizedValue}%`,
+                        height: '100%',
+                        background: barColor,
+                        borderRadius: `${height / 2}px`,
+                        transition: 'width 0.5s ease'
+                    }}
+                />
+            </div>
+            {showLabel && (
+                <span style={{ fontSize: '13px', fontWeight: 500, color: barColor, minWidth: '40px' }}>
+                    {normalizedValue.toFixed(0)}%
+                </span>
+            )}
+        </div>
     );
 }
