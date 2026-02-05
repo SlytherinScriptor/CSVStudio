@@ -128,6 +128,12 @@ export function BarChart({ data, height = 200, showValues = true }: BarChartProp
 }
 
 
+// ===== HORIZONTAL BAR CHART =====
+interface HorizontalBarProps {
+    data: { label: string; value: number; color?: string }[];
+    maxLabelWidth?: number;
+}
+
 export function HorizontalBar({ data, maxLabelWidth = 120 }: HorizontalBarProps) {
     const maxValue = Math.max(...data.map(d => d.value), 1);
 
