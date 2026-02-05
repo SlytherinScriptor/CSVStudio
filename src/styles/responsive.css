@@ -1,0 +1,518 @@
+/* ========================================
+   CSVStudio Responsive Design
+   Professional Breakpoint System
+   ======================================== */
+
+/* ========================================
+   DESKTOP (Default - 1024px+)
+   Full sidebar, expanded layout
+   ======================================== */
+
+/* Desktop is the default state, no media query needed */
+
+/* ========================================
+   LARGE DESKTOP (1440px+)
+   Extra spacing and larger content area
+   ======================================== */
+
+@media (min-width: 1440px) {
+  .content-body {
+    padding: var(--space-8) var(--space-12);
+  }
+
+  .welcome-content-grid {
+    padding: var(--space-16) var(--space-12);
+    gap: var(--space-16);
+  }
+
+  .hero-title {
+    font-size: 3rem;
+  }
+}
+
+/* ========================================
+   TABLET BREAKPOINT (768px - 1100px)
+   Collapsible sidebar, adaptive layout
+   ======================================== */
+
+@media (max-width: 1100px) {
+
+  /* Sidebar becomes off-canvas */
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    z-index: var(--z-modal);
+    box-shadow: var(--shadow-2xl);
+  }
+
+  .app-shell.has-sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  /* Main content takes full width */
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* Show mobile header */
+  .mobile-header {
+    display: flex;
+  }
+
+  /* Adjust content spacing */
+  .content-header {
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .content-body {
+    padding: var(--space-5) var(--space-6);
+  }
+
+  /* Welcome screen */
+  .welcome-content-grid {
+    padding: var(--space-8);
+    gap: var(--space-10);
+  }
+
+  .hero-title {
+    font-size: var(--text-3xl);
+  }
+
+  /* Features grid */
+  .features-container {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  /* Grid adjustments */
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ========================================
+   MOBILE BREAKPOINT (480px - 768px)
+   Stacked layout, touch-friendly
+   ======================================== */
+
+@media (max-width: 768px) {
+
+  /* Smaller sidebar */
+  .sidebar {
+    width: 280px;
+    max-width: 85vw;
+  }
+
+  /* Compact content */
+  .content-header {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .content-header h1 {
+    font-size: var(--text-xl);
+  }
+
+  .content-body {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  /* Welcome screen mobile */
+  .welcome-content-grid {
+    padding: var(--space-6);
+    gap: var(--space-8);
+  }
+
+  .hero-section {
+    gap: var(--space-5);
+  }
+
+  .hero-title {
+    font-size: var(--text-2xl);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-base);
+  }
+
+  .hero-cta {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .hero-cta .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .trust-badges {
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+
+  /* Feature cards stack */
+  .features-container {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card {
+    padding: var(--space-5);
+  }
+
+  /* Cards compact */
+  .card {
+    padding: var(--space-5);
+  }
+
+  /* Grid stacks */
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Tables full width */
+  .table-wrap {
+    margin: 0 calc(-1 * var(--space-5));
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  /* Form elements stack */
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions .btn {
+    width: 100%;
+  }
+
+  /* Segmented control full width */
+  .segmented {
+    width: 100%;
+    display: flex;
+  }
+
+  .segmented button {
+    flex: 1;
+  }
+
+  /* Modal adjustments */
+  .modal {
+    margin: var(--space-4);
+    max-height: calc(100vh - var(--space-8));
+  }
+
+  /* Toast adjustments */
+  .toast-container {
+    left: var(--space-4);
+    right: var(--space-4);
+  }
+
+  .toast {
+    min-width: auto;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+/* ========================================
+   SMALL MOBILE (< 480px)
+   Compact everything
+   ======================================== */
+
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+
+  .mobile-header {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .sidebar-toggle,
+  .theme-toggle-compact {
+    width: 36px;
+    height: 36px;
+  }
+
+  .content-body {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .welcome-content-grid {
+    padding: var(--space-4);
+    gap: var(--space-6);
+  }
+
+  .hero-badge {
+    font-size: 0.65rem;
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .hero-title {
+    font-size: 1.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-sm);
+  }
+
+  .feature-card {
+    padding: var(--space-4);
+  }
+
+  .feature-card .card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  /* Drop zone compact */
+  .drop {
+    padding: var(--space-6);
+  }
+
+  .drop-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Footer compact */
+  .app-footer {
+    padding: var(--space-4);
+  }
+
+  .footer-content {
+    gap: var(--space-2);
+  }
+
+  .footer-right {
+    gap: var(--space-3);
+  }
+}
+
+/* ========================================
+   TOUCH DEVICE OPTIMIZATIONS
+   ======================================== */
+
+@media (hover: none) and (pointer: coarse) {
+
+  /* Larger touch targets (min 44px) */
+  .nav-item,
+  .nav-group-header {
+    padding: var(--space-4) var(--space-5);
+    min-height: 48px;
+  }
+
+  .btn {
+    min-height: 44px;
+    padding: var(--space-3) var(--space-5);
+  }
+
+  .btn-sm {
+    min-height: 36px;
+  }
+
+  .sidebar-toggle,
+  .theme-toggle-compact {
+    width: 44px;
+    height: 44px;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+  }
+
+  /* Disable hover effects */
+  .feature-card:hover {
+    transform: none;
+  }
+
+  .nav-item:hover {
+    transform: none;
+  }
+
+  .hover-lift:hover {
+    transform: none;
+  }
+
+  .hover-scale:hover {
+    transform: none;
+  }
+
+  /* Add active states instead */
+  .feature-card:active {
+    transform: scale(0.98);
+  }
+
+  .nav-item:active {
+    background: var(--sidebar-active);
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+}
+
+/* ========================================
+   HIGH CONTRAST MODE
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: currentColor;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+  }
+
+  .card,
+  .modal,
+  .toast {
+    border-width: 2px;
+  }
+
+  .btn {
+    border-width: 2px;
+  }
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    animation: none;
+    background: var(--skeleton-base);
+  }
+
+  .gradient-orb {
+    animation: none;
+  }
+
+  .orb {
+    animation: none;
+  }
+
+  .badge-dot {
+    animation: none;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+
+  /* Hide non-essential elements */
+  .sidebar,
+  .mobile-header,
+  .sidebar-backdrop,
+  .full-bg-container,
+  .background-elements,
+  .floating-orbs,
+  .toast-container {
+    display: none !important;
+  }
+
+  /* Full width content */
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .content-body {
+    padding: 0;
+    overflow: visible;
+  }
+
+  /* Clean card styling */
+  .card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    break-inside: avoid;
+  }
+
+  /* Remove backgrounds */
+  body {
+    background: white;
+    color: black;
+  }
+
+  .bg-surface,
+  .bg-soft {
+    background: white !important;
+  }
+
+  /* Links show URL */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* Page breaks */
+  h1,
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
+
+  table {
+    page-break-inside: avoid;
+  }
+}
+
+/* ========================================
+   LANDSCAPE ORIENTATION
+   ======================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .welcome-content-grid {
+    padding: var(--space-4) var(--space-6);
+    gap: var(--space-4);
+  }
+
+  .hero-section {
+    gap: var(--space-3);
+  }
+
+  .hero-title {
+    font-size: var(--text-2xl);
+  }
+
+  .features-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .feature-card {
+    padding: var(--space-3);
+  }
+}
