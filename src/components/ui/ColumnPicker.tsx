@@ -39,15 +39,16 @@ export function ColumnPicker({ allHeaders, selected, onChange }: ColumnPickerPro
                 <Button variant="secondary" onClick={handleClear}>Clear</Button>
                 <span className="hint">{selected.size}/{allHeaders.length} selected</span>
             </div>
-            <div className="list">
+            <div className="list flex flex-wrap gap-4">
                 {filtered.map(h => (
-                    <label className="item" key={h}>
+                    <label className="item flex items-center gap-2 cursor-pointer min-w-0" key={h}>
                         <input
                             type="checkbox"
                             checked={selected.has(h)}
                             onChange={() => toggle(h)}
+                            className="w-4 h-4 accent-primary"
                         />
-                        <span>{h}</span>
+                        <span className="truncate">{h}</span>
                     </label>
                 ))}
             </div>
