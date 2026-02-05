@@ -7,7 +7,7 @@ import { Button } from './ui/Button';
 import { ColumnPicker } from './ui/ColumnPicker';
 import { Table } from './ui/Table';
 import { HelpTooltip } from './ui/HelpTooltip';
-import { parseCSVFile, formatPreservingExport } from '../lib/csv';
+import { parseCSVFile, formatPreservingExport, buildRowQuoteOverrides } from '../lib/csv';
 import type { ParsedCSV } from '../lib/csv';
 
 export function UpsertPanel() {
@@ -164,7 +164,8 @@ export function UpsertPanel() {
         }
 
         // Format-preserving export: unchanged rows stay byte-identical
-        const csv = formatPreservingExport(headersOut, outRows, original, key, changedKeys);
+        const quoteOverrides = buildRowQuoteOverrides(mods, key);
+        const csv = formatPreservingExport(headersOut, outRows, original, key, changedKeys, quoteOverrides);
 
         navigator.clipboard.writeText(csv).then(() => {
             alert(`Copied to clipboard! Updated: ${updated}, Inserted: ${inserted}`);
