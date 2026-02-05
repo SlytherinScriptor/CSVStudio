@@ -3001,9 +3001,9 @@ tr.removed td {
 .app-shell {
     display: flex;
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
     background: transparent !important;
     /* Let body gradients show */
 }
