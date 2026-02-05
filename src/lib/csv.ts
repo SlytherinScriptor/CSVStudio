@@ -137,12 +137,45 @@ function formatValueForColumn(value: any, shouldQuote: boolean): string {
 function buildLineWithPattern(
     row: Record<string, any>,
     headers: string[],
-    columnQuotePattern: boolean[]
+    columnQuotePattern: boolean[],
+    quoteOverrides?: Record<string, boolean>
 ): string {
     return headers.map((h, i) => {
-        const shouldQuote = columnQuotePattern[i] ?? false;
+        const shouldQuote = (quoteOverrides?.[h] ?? false) || (columnQuotePattern[i] ?? false);
         return formatValueForColumn(row[h], shouldQuote);
     }).join(',');
+}
+
+/**
+ * Build a per-row quote override map using the raw lines from a parsed CSV.
+ * Used to preserve quotes found in the modifications file for updated/inserted rows.
+ */
+export function buildRowQuoteOverrides(
+    parsedCSV: ParsedCSV,
+    keyColumn: string
+): Map<string, Record<string, boolean>> {
+    if (!parsedCSV.rawLines || parsedCSV.rawLines.length === 0) {
+        return new Map();
+    }
+
+    const overrides = new Map<string, Record<string, boolean>>();
+
+    parsedCSV.rows.forEach((row, index) => {
+        const rawLine = parsedCSV.rawLines[index];
+        const key = String(row[keyColumn] ?? '').trim();
+        if (!key || !rawLine) return;
+
+        const pattern = detectColumnQuotePattern(rawLine);
+        const rowOverrides: Record<string, boolean> = {};
+
+        parsedCSV.headers.forEach((header, headerIndex) => {
+            rowOverrides[header] = pattern[headerIndex] ?? false;
+        });
+
+        overrides.set(key, rowOverrides);
+    });
+
+    return overrides;
 }
 
 /**
@@ -154,7 +187,8 @@ export function formatPreservingExport(
     rows: Record<string, any>[],
     originalCSV: ParsedCSV | ParsedData,
     keyColumn: string,
-    changedKeys: Set<string>
+    changedKeys: Set<string>,
+    quoteOverridesByKey?: Map<string, Record<string, boolean>>
 ): string {
     // If no raw lines available, fallback to simple export
     if (!originalCSV.rawLines || !originalCSV.rawHeaderLine) {
@@ -200,7 +234,8 @@ export function formatPreservingExport(
         }
 
         // Otherwise, rebuild the line with the detected per-column pattern
-        return buildLineWithPattern(row, headers, dataQuotePattern);
+        const overrides = quoteOverridesByKey?.get(key);
+        return buildLineWithPattern(row, headers, dataQuotePattern, overrides);
     });
 
     return [headerLine, ...dataLines].join('\r\n');
@@ -221,6 +256,5 @@ export function exportToCSV(headers: string[], rows: Record<string, any>[]): str
         }
     );
 }
-
 
 
