@@ -15,7 +15,7 @@ import {
 
 
 // Quality Score Ring Component
-import { QualityGauge, HorizontalBar, StatCard, TypeBadge, ProgressBar } from './charts/Charts';
+import { QualityGauge, BarChart, StatCard, TypeBadge } from './charts/Charts';
 
 export function ProfilePanel() {
     const { showToast } = useToast();
@@ -201,7 +201,12 @@ ${col.column}
                                         <span style={{ fontWeight: 500 }}>{item.label}</span>
                                         <span style={{ color: item.color, fontWeight: 600 }}>{item.value.toFixed(1)}%</span>
                                     </div>
-                                    <ProgressBar value={item.value} color={item.color} height={8} />
+                                    <div className="progress-bar">
+                                        <div
+                                            className="progress-fill"
+                                            style={{ width: `${item.value}%`, background: item.color }}
+                                        />
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -322,12 +327,13 @@ ${col.column}
                                     <BarChart3 size={16} />
                                     Value Distribution (Top 10)
                                 </h5>
-                                <HorizontalBar
+                                <BarChart
                                     data={selectedStats.topValues.map(tv => ({
-                                        label: String(tv.value).substring(0, 20),
-                                        value: tv.count
+                                        label: String(tv.value),
+                                        value: tv.count,
+                                        color: 'var(--accent)'
                                     }))}
-                                    maxLabelWidth={100}
+                                    height={240}
                                 />
                             </div>
                         </Card>

@@ -1,18 +1,20 @@
-import { useState, useRef, useEffect } from 'react';
-import { HelpCircle } from 'lucide-react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 
 interface HelpTooltipProps {
     content: string;
+    children?: ReactNode;
 }
 
-export function HelpTooltip({ content }: HelpTooltipProps) {
+export function HelpTooltip({ content, children }: HelpTooltipProps) {
     const [visible, setVisible] = useState(false);
     const [position, setPosition] = useState<'top' | 'bottom'>('top');
     const triggerRef = useRef<HTMLButtonElement>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (visible && triggerRef.current) {
             const rect = triggerRef.current.getBoundingClientRect();
+            // Show below if too close to top
             setPosition(rect.top < 80 ? 'bottom' : 'top');
         }
     }, [visible]);
@@ -29,10 +31,11 @@ export function HelpTooltip({ content }: HelpTooltipProps) {
                 onFocus={() => setVisible(true)}
                 onBlur={() => setVisible(false)}
             >
-                <HelpCircle size={14} />
+                {children || '?'}
             </button>
             {visible && (
                 <div
+                    ref={tooltipRef}
                     className={`help-tooltip-content help-tooltip-${position}`}
                     role="tooltip"
                 >

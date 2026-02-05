@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import './App.css';
 import { UpsertPanel } from './components/UpsertPanel';
 import { DeletePanel } from './components/DeletePanel';
 import { ComparePanel } from './components/ComparePanel';
@@ -15,7 +16,7 @@ import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import {
     ArrowUpDown, Trash2, GitCompare, Sun, Moon, Wand2, ShieldCheck,
-    Table2, BarChart3, FileJson, ChevronDown, FileText, Menu, X
+    Table2, BarChart3, FileJson, ChevronDown, FileText
 } from 'lucide-react';
 
 type Tool = 'upsert' | 'delete' | 'compare' | 'studio' | 'validate' | 'pivot' | 'profile' | 'convert' | 'welcome';
@@ -46,15 +47,6 @@ export default function App() {
     const [activeTool, setActiveTool] = useState<Tool>('welcome');
     const [csvToolsExpanded, setCsvToolsExpanded] = useState(false);
     const [sampleFile, setSampleFile] = useState<File | null>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    const csvToolIds = new Set(csvTools.map(tool => tool.id));
-    const isCsvToolActive = csvToolIds.has(activeTool);
-    const activeToolMeta = allTools.find(tool => tool.id === activeTool);
-    const activeToolLabel = activeTool === 'welcome' ? 'Welcome' : (activeToolMeta?.label ?? 'Tool');
-    const activeToolDescription = activeTool === 'welcome'
-        ? 'Choose a workflow to start shaping your data.'
-        : (activeToolMeta?.description ?? '');
 
     // Keyboard Shortcuts
     useKeyboardShortcuts({
@@ -74,35 +66,23 @@ export default function App() {
         const file = generateSampleData();
         setSampleFile(file);
         setActiveTool('studio');
-        setIsSidebarOpen(false);
     };
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
     }, [theme]);
 
-    useEffect(() => {
-        if (isCsvToolActive) {
-            setCsvToolsExpanded(true);
-        }
-    }, [isCsvToolActive]);
-
-    useEffect(() => {
-        setIsSidebarOpen(false);
-    }, [activeTool]);
-
     const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
     const handleToolClick = (toolId: Tool) => {
         setActiveTool(toolId);
-        setIsSidebarOpen(false);
         // Manual control only
     };
 
     return (
         <ToastProvider>
 
-            <div className={`app-shell ${isSidebarOpen ? 'has-sidebar-open' : ''}`}>
+            <div className="app-shell">
                 {/* Immersive Background (Global) */}
                 <div className="full-bg-container">
                     <div className="background-gradient" />
@@ -111,11 +91,6 @@ export default function App() {
                         <div className="orb orb-2" />
                     </div>
                 </div>
-
-                <div
-                    className={`sidebar-backdrop ${isSidebarOpen ? 'visible' : ''}`}
-                    onClick={() => setIsSidebarOpen(false)}
-                />
 
                 {/* Sidebar - Always visible */}
                 <aside className="sidebar">
@@ -128,9 +103,8 @@ export default function App() {
                         {/* CSV Tools Group (Collapsible) */}
                         <div className="nav-group">
                             <button
-                                className={`nav-group-header ${isCsvToolActive ? 'has-active' : ''}`}
+                                className="nav-group-header"
                                 onClick={() => setCsvToolsExpanded(!csvToolsExpanded)}
-                                aria-expanded={csvToolsExpanded}
                             >
                                 <div className="flex items-center gap-2">
                                     <FileText size={16} />
@@ -148,13 +122,9 @@ export default function App() {
                                             key={tool.id}
                                             className={`nav-item ${activeTool === tool.id ? 'active' : ''}`}
                                             onClick={() => handleToolClick(tool.id)}
-                                            aria-current={activeTool === tool.id ? 'page' : undefined}
                                         >
                                             <tool.icon size={18} />
-                                            <span className="nav-text">
-                                                <span className="nav-label">{tool.label}</span>
-                                                <span className="nav-desc">{tool.description}</span>
-                                            </span>
+                                            <span>{tool.label}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -167,13 +137,9 @@ export default function App() {
                                 key={tool.id}
                                 className={`nav-item ${activeTool === tool.id ? 'active' : ''}`}
                                 onClick={() => handleToolClick(tool.id)}
-                                aria-current={activeTool === tool.id ? 'page' : undefined}
                             >
                                 <tool.icon size={20} />
-                                <span className="nav-text">
-                                    <span className="nav-label">{tool.label}</span>
-                                    <span className="nav-desc">{tool.description}</span>
-                                </span>
+                                <span>{tool.label}</span>
                             </button>
                         ))}
                     </nav>
@@ -186,11 +152,9 @@ export default function App() {
                             <a href="https://github.com/SlytherinScriptor/CSVStudio/issues" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none', margin: '0 4px' }}>Issues</a>
                         </div>
 
-                        <button
-                            type="button"
+                        <div
                             className={`theme-switch-container ${theme}`}
                             onClick={toggleTheme}
-                            aria-label="Toggle theme"
                         >
                             <div className="theme-switch-track">
                                 <div className="theme-icon sun">
@@ -204,43 +168,17 @@ export default function App() {
                             <span className="theme-label">
                                 {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
                             </span>
-                        </button>
+                        </div>
                     </div>
                 </aside>
 
 
                 {/* Main Content */}
                 <main className="main-content">
-                    <div className="mobile-header">
-                        <button
-                            type="button"
-                            className="sidebar-toggle"
-                            onClick={() => setIsSidebarOpen(prev => !prev)}
-                            aria-label={isSidebarOpen ? 'Close navigation' : 'Open navigation'}
-                        >
-                            {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
-                        </button>
-                        <div className="mobile-header-title">
-                            <span className="mobile-header-label">{activeToolLabel}</span>
-                            {activeToolDescription && (
-                                <span className="mobile-header-desc">{activeToolDescription}</span>
-                            )}
-                        </div>
-                        <button
-                            type="button"
-                            className="theme-toggle-compact"
-                            onClick={toggleTheme}
-                            aria-label="Toggle theme"
-                        >
-                            {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
-                        </button>
-                    </div>
                     {activeTool !== 'welcome' && (
                         <header className="content-header">
-                            <div>
-                                <h1>{activeToolLabel}</h1>
-                                <p>{activeToolDescription}</p>
-                            </div>
+                            <h1>{allTools.find(t => t.id === activeTool)?.label}</h1>
+                            <p>{allTools.find(t => t.id === activeTool)?.description}</p>
                         </header>
                     )}
 
@@ -268,3 +206,5 @@ export default function App() {
         </ToastProvider>
     );
 }
+
+
