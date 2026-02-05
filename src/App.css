@@ -11,7 +11,7 @@
 
 /* Sidebar */
 .sidebar {
-    width: 260px;
+    width: 280px;
     background: var(--bg-elevated);
     border-right: 1px solid var(--border);
     display: flex;
@@ -29,6 +29,14 @@
     gap: 12px;
     padding: 20px;
     border-bottom: 1px solid var(--border);
+}
+
+.logo-text {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    line-height: 1;
 }
 
 .sidebar-logo {
@@ -214,7 +222,7 @@
 /* Main Content */
 .main-content {
     flex: 1;
-    margin-left: 260px;
+    margin-left: 280px;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -3529,7 +3537,7 @@ canvas {
 
 @media (max-width: 1024px) {
     .sidebar {
-        width: 260px;
+        width: 280px;
         transform: translateX(-110%);
         box-shadow: none;
         z-index: 60;
