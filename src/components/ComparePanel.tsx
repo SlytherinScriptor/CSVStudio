@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Download, RotateCcw, GitCompare } from 'lucide-react';
-import Papa from 'papaparse';
+import * as XLSX from 'xlsx-js-style';
 import { Card } from './ui/Card';
 import { DropZone } from './ui/DropZone';
 import { Stepper } from './ui/Stepper';
@@ -137,33 +137,89 @@ export function ComparePanel() {
         setStep(3);
     };
 
-    // Export diff as CSV
+    // Export diff as Excel with colored sheets
     const handleExport = () => {
         if (!diffResult) return;
 
-        const rows: any[] = [];
+        // Create workbook
+        const wb = XLSX.utils.book_new();
 
-        diffResult.added.forEach(r => {
-            rows.push({ _diff_type: 'ADDED', ...r });
-        });
-        diffResult.removed.forEach(r => {
-            rows.push({ _diff_type: 'REMOVED', ...r });
-        });
-        diffResult.changed.forEach(r => {
-            const id = String(r[key] ?? '').trim();
-            const oldVals = diffResult.changedById.get(id) || {};
-            const changedCols = Object.keys(oldVals).join('; ');
-            rows.push({ _diff_type: 'CHANGED', _changed_columns: changedCols, ...r });
-        });
+        // Helper function to create sheet with styling
+        const createSheet = (rows: any[], fillColor: string, sheetName: string, changedCells?: Map<string, Record<string, string>>) => {
+            if (rows.length === 0) {
+                // Empty sheet with just headers
+                const ws = XLSX.utils.aoa_to_sheet([diffResult.allHeaders]);
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                return;
+            }
 
-        const fields = ['_diff_type', '_changed_columns', ...diffResult.allHeaders];
-        const csv = Papa.unparse({ fields, data: rows });
+            // Convert rows to array of arrays for xlsx
+            const data = rows.map(row =>
+                diffResult.allHeaders.map(h => row[h] ?? '')
+            );
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            // Add headers as first row
+            const sheetData = [diffResult.allHeaders, ...data];
+            const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+            // Apply cell styling
+            const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+
+            for (let R = range.s.r; R <= range.e.r; R++) {
+                for (let C = range.s.c; C <= range.e.c; C++) {
+                    const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[cellRef]) ws[cellRef] = { v: '', t: 's' };
+
+                    if (R === 0) {
+                        // Header row - bold with fill
+                        ws[cellRef].s = {
+                            fill: { patternType: 'solid', fgColor: { rgb: 'FF' + fillColor } },
+                            font: { bold: true },
+                            alignment: { horizontal: 'center' }
+                        };
+                    } else {
+                        // Data rows
+                        if (changedCells) {
+                            // For changed rows, only highlight cells that actually changed
+                            const rowData = rows[R - 1];
+                            const id = options.trim
+                                ? String(rowData[key] ?? '').trim()
+                                : String(rowData[key] ?? '');
+                            const normalizedId = options.ci ? id.toLowerCase() : id;
+                            const changedFields = changedCells.get(normalizedId);
+
+                            const header = diffResult.allHeaders[C];
+                            if (changedFields && changedFields[header] !== undefined) {
+                                // This cell was changed - highlight in yellow
+                                ws[cellRef].s = {
+                                    fill: { patternType: 'solid', fgColor: { rgb: 'FFFFEB9C' } }
+                                };
+                            }
+                        } else {
+                            // For added/removed rows, fill all cells
+                            ws[cellRef].s = {
+                                fill: { patternType: 'solid', fgColor: { rgb: 'FF' + fillColor } }
+                            };
+                        }
+                    }
+                }
+            }
+
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        };
+
+        // Create sheets with appropriate colors
+        createSheet(diffResult.added, 'C6EFCE', 'Added');      // Light green
+        createSheet(diffResult.removed, 'FFC7CE', 'Removed');   // Light red
+        createSheet(diffResult.changed, 'FFEB9C', 'Changed', diffResult.changedById);  // Yellow for changed cells
+
+        // Generate and download the Excel file
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'diff_result.csv';
+        a.download = 'diff_result.xlsx';
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -264,7 +320,7 @@ export function ComparePanel() {
                                 Compare
                             </Button>
                             <Button variant="ok" onClick={handleExport} disabled={!diffResult} icon={<Download size={16} />}>
-                                Export Diff CSV
+                                Export Diff Excel
                             </Button>
                             <Button variant="ghost" onClick={handleReset} icon={<RotateCcw size={16} />}>
                                 Reset

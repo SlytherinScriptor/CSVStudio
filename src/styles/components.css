@@ -785,36 +785,8 @@ td.deleted {
 }
 
 /* ========================================
-   TOOLTIPS
+   TOOLTIPS - Styles moved to HelpTooltip.tsx inline
    ======================================== */
-
-.help-tooltip-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.help-tooltip-content {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  font-size: var(--text-xs);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--duration-fast) var(--ease-default);
-  z-index: var(--z-tooltip);
-}
-
-.help-tooltip-wrapper:hover .help-tooltip-content {
-  opacity: 1;
-}
 
 /* ========================================
    STEPPER

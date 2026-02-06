@@ -428,18 +428,21 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
+    background: #1e1e2e;
+    background-color: #1e1e2e !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     font-size: var(--text-xs);
     color: var(--text-secondary);
     line-height: 1.5;
     white-space: normal;
-    max-width: 260px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 280px;
     min-width: 180px;
-    z-index: var(--z-tooltip);
+    z-index: 9999 !important;
     animation: tooltipFade 0.15s var(--ease-smooth);
 }
 
@@ -461,6 +464,14 @@
 
 .help-tooltip-bottom {
     top: calc(100% + 8px);
+}
+
+/* Ensure word wrap works on all tooltip variants */
+.help-tooltip-content.help-tooltip-top,
+.help-tooltip-content.help-tooltip-bottom {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
 }
 
 .help-tooltip-arrow {

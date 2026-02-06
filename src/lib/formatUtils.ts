@@ -181,15 +181,15 @@ export function xmlToCsv(
 
         if (rowElements.length === 0) return null;
 
-        // Extract headers from first row
+        // Extract headers from first row - use localName to preserve original casing
         const firstRow = rowElements[0];
-        const headers = Array.from(firstRow.children).map(el => el.tagName);
+        const headers = Array.from(firstRow.children).map(el => el.localName);
 
-        // Extract values from all rows
+        // Extract values from all rows - use localName to preserve original casing
         const rows = rowElements.map(rowEl => {
             const row: Record<string, any> = {};
             for (const child of Array.from(rowEl.children)) {
-                row[child.tagName] = child.textContent || '';
+                row[child.localName] = child.textContent || '';
             }
             return row;
         });
